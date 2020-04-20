@@ -1,0 +1,247 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.PlayerDetailView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:goh_ui"
+                  Title="{Binding Path=WindowTitle}"
+                  Height="375"
+                  Width="475">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:FormattedNumberConverter x:Key="Fmt"/>
+
+            <!-- Custom styles/templates for columns. -->
+            <DataTemplate x:Key="Level">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=level}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="Power">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=TruePower, Converter={StaticResource Fmt}}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="Stars">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=rarity}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="Gear">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=GearLevelDescriptive}"/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <TabControl Grid.Row="0" TabStripPlacement="Left">
+        <TabControl.Resources>
+            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource RotatedTabs}"/>
+        </TabControl.Resources>
+
+        <!-- General player info -->
+        <TabItem Header="General">
+            <StackPanel Orientation="Vertical"
+                            Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="{Binding Path=Player.Name}"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Padding="5,5,0,5"/>
+                    <Label Content=","
+                           FontSize="20"
+                           Padding="0,5">
+                        <Label.Style>
+                            <!-- Hide comma if there's no title to display -->
+                            <Style TargetType="{x:Type Label}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=Player.CurrentTitle}" Value="">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Style>
+                    </Label>
+                    <Label Content="{Binding Path=Player.CurrentTitle}"
+                           FontSize="20"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Level" FontWeight="Bold"/>
+                    <Label Content="{Binding Path=Player.Level}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Ally Code:" FontWeight="Bold"/>
+                    <Label Content="{Binding Path=Player.AllyCode}"/>
+                </StackPanel>
+                <Label Content="Galactic Power:" Margin="0,10,0,0"/>
+                <Grid HorizontalAlignment="Left" Margin="20,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <Label Content="Characters"
+                               Grid.Row="0"
+                               Grid.Column="0"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Right"/>
+                    <Label Content="Ships"
+                               Grid.Row="1"
+                               Grid.Column="0"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Right"/>
+                    <Border Grid.Row="2"
+                                Grid.Column="0"
+                                BorderThickness="0,1,0,0"
+                                BorderBrush="Black">
+                        <Label Content="Total"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Right"/>
+                    </Border>
+
+                    <Label Content="{Binding Path=Player.CharacterPower}"
+                           ContentStringFormat="{}{0:N0}"
+                           Grid.Column="1"
+                           Grid.Row="0"
+                           Margin="3,0,0,0"
+                           HorizontalAlignment="Right"/>
+                    <Label Content="{Binding Path=Player.ShipPower}"
+                           ContentStringFormat="{}{0:N0}"
+                           Grid.Column="1"
+                           Grid.Row="1"
+                           Margin="3,0,0,0"
+                           HorizontalAlignment="Right"/>
+                    <Border Grid.Row="2"
+                            Grid.Column="1"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="Black">
+                        <Label Content="{Binding Path=Player.Power}"
+                               ContentStringFormat="{}{0:N0}"
+                               Margin="3,0,0,0"
+                               HorizontalAlignment="Right"/>
+                    </Border>
+
+                </Grid>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Zetas:" FontWeight="Bold"/>
+                    <Label Content="{Binding Path=Player.NumZetas}"/>
+                </StackPanel>
+            </StackPanel>
+        </TabItem>
+
+        <!-- Character roster -->
+        <TabItem Header="Characters">
+            <ListView Margin="5"
+                          ItemsSource="{Binding Path=Characters}"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.CanContentScroll="True"
+                          local:GridViewSort.AutoSort="True"
+                          ItemContainerStyle="{StaticResource StretchColumn}">
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name"
+                                            Width="180"
+                                            DisplayMemberBinding="{Binding Path=name}"
+                                            local:GridViewSort.PropertyName="name"/>
+                        <GridViewColumn Header="Level"
+                                            Width="30"
+                                            CellTemplate="{StaticResource Level}"
+                                            local:GridViewSort.PropertyName="level"/>
+                        <GridViewColumn Header="Stars"
+                                            Width="30"
+                                            CellTemplate="{StaticResource Stars}"
+                                            local:GridViewSort.PropertyName="rarity"/>
+                        <GridViewColumn Header="Gear Level"
+                                            Width="60"
+                                            CellTemplate="{StaticResource Gear}"
+                                            local:GridViewSort.PropertyName="GearLevelSortable"/>
+                        <GridViewColumn Header="Power"
+                                            Width="60"
+                                            CellTemplate="{StaticResource Power}"
+                                            local:GridViewSort.PropertyName="TruePower"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </TabItem>
+
+        <!-- Ship roster -->
+        <TabItem Header="Ships">
+            <ListView Margin="5"
+                          ItemsSource="{Binding Path=Ships}"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.CanContentScroll="True"
+                          local:GridViewSort.AutoSort="True"
+                          ItemContainerStyle="{StaticResource StretchColumn}">
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name"
+                                            Width="180"
+                                            DisplayMemberBinding="{Binding Path=name}"
+                                            local:GridViewSort.PropertyName="name"/>
+                        <GridViewColumn Header="Level"
+                                            Width="30"
+                                            CellTemplate="{StaticResource Level}"
+                                            local:GridViewSort.PropertyName="level"/>
+                        <GridViewColumn Header="Stars"
+                                            Width="30"
+                                            CellTemplate="{StaticResource Stars}"
+                                            local:GridViewSort.PropertyName="rarity"/>
+                        <GridViewColumn Header="Power"
+                                            Width="60"
+                                            CellTemplate="{StaticResource Power}"
+                                            local:GridViewSort.PropertyName="TruePower"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </TabItem>
+
+        <!-- Zeta list -->
+        <TabItem Header="Zetas">
+            <ListView Margin="5"
+                          ItemsSource="{Binding Path=ZetaList}"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.CanContentScroll="True"
+                          local:GridViewSort.AutoSort="True">
+
+                <ListView.View>
+                    <GridView>
+
+                        <GridViewColumn Header="Character"
+                                        DisplayMemberBinding="{Binding Path=Item1}"
+                                        local:GridViewSort.PropertyName="Item1"/>
+
+                        <GridViewColumn Header="Ability"
+                                        DisplayMemberBinding="{Binding Path=Item2}"
+                                        local:GridViewSort.PropertyName="Item2"/>
+
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </TabItem>
+        
+        <!-- Player stats -->
+        <TabItem Header="Stats">
+            <ListView Margin="5"
+                      ItemsSource="{Binding Path=StatsList}"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.CanContentScroll="True"
+                      ItemContainerStyle="{StaticResource StretchColumn}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" HorizontalContentAlignment="Left" Content="{Binding Path=Description}"/>
+                            <Label Grid.Column="1" HorizontalContentAlignment="Right" Content="{Binding Path=Value}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </TabItem>
+        
+    </TabControl>
+</local:ToolWindow>

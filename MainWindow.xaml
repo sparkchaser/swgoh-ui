@@ -1,0 +1,148 @@
+﻿<Window x:Class="goh_ui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:goh_ui"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        Title="Guild Information">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVisConv"/>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Menu bar -->
+        <Menu IsMainMenu="True" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+            <Menu.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <DockPanel HorizontalAlignment="Stretch"/>
+                </ItemsPanelTemplate>
+            </Menu.ItemsPanel>
+
+            <MenuItem Header="_File">
+                <MenuItem Header="_Export Data ..."
+                          ToolTip="Save raw data to a file"
+                          Command="{Binding Path=ExportCommand}"/>
+                <MenuItem Header="_Import Data ..."
+                          ToolTip="Load data from a file"
+                          Command="{Binding Path=ImportCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit"
+                          Command="{Binding Path=ExitCommand}"/>
+            </MenuItem>
+
+            <MenuItem Header="_Tools">
+                <MenuItem Header="G_uild Roster"
+                          Command="{Binding Path=RosterCommand}"/>
+                <MenuItem Header="_Who Has"
+                          ToolTip="Check who has a specific character"
+                          Command="{Binding Path=WhoHasCommand}"/>
+                <MenuItem Header="_Squad Checker"
+                          ToolTip="Find all guild members who have a particular squad"
+                          Command="{Binding Path=SquadCheckerCommand}"/>
+            </MenuItem>
+
+            <MenuItem Header="_About"
+                      Command="{Binding Path=ShowAbout}"
+                      HorizontalAlignment="Right"/>
+        </Menu>
+        
+        <!-- Login info entry -->
+        <GroupBox Header="Login info" Grid.Row="1" Grid.Column="0" Margin="2">
+            <Grid>
+                <Grid.Resources>
+                    <Style TargetType="Label">
+                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="Grid.Column" Value="0"/>
+                    </Style>
+                    <Style TargetType="TextBox">
+                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                        <Setter Property="Grid.Column" Value="1"/>
+                        <Setter Property="Width" Value="100"/>
+                        <Setter Property="Margin" Value="2,5"/>
+                    </Style>
+                    <Style TargetType="PasswordBox">
+                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                        <Setter Property="Grid.Column" Value="1"/>
+                        <Setter Property="Width" Value="100"/>
+                        <Setter Property="Margin" Value="2,5"/>
+                    </Style>
+                </Grid.Resources>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Label Content="Username:" Grid.Row="0"/>
+                <Label Content="Password:" Grid.Row="1"/>
+                <Label Content="User ID:" Grid.Row="2"/>
+                <Label Content="Ally Code:" Grid.Row="3"/>
+
+                <TextBox Grid.Row="0" Text="{Binding Path=Username}"/>
+                <PasswordBox Grid.Row="1" x:Name="PasswordField" PasswordChanged="PasswordField_PasswordChanged"/>
+                <TextBox Grid.Row="2" Text="{Binding Path=UserId}"/>
+                <TextBox Grid.Row="3" Text="{Binding Path=AllyCode}"/>
+
+            </Grid>
+        </GroupBox>
+        
+        <!-- Buttons -->
+        <StackPanel Orientation="Vertical"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Width="180"
+                    Margin="2,20,2,5">
+            <Button Content="Fetch Data"
+                    Width="80"
+                    Margin="5"
+                    Command="{Binding Path=GetGuildCommand}"
+                    HorizontalAlignment="Right"
+                    ToolTip="Fetch guild data"/>
+            <Border Margin="0,2"
+                    Visibility="{Binding Path=LoggedIn, Converter={StaticResource BoolVisConv}, FallbackValue=Visible}"
+                    Width="150">
+                <StackPanel Orientation="Vertical">
+                    <Label Content="Logged in as:"
+                           Margin="0"
+                           Padding="0"/>
+                    <Label Content="{Binding Path=PlayerName}"
+                           Margin="10,0,0,0"
+                           Padding="0"
+                           FontWeight="Bold"/>
+                    <Label Content="of guild:"
+                           Margin="0"
+                           Padding="0"/>
+                    <Label Content="{Binding Path=GuildName}"
+                           Margin="10,0,0,0"
+                           Padding="0"
+                           FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+
+        <!-- Status bar -->
+        <StatusBar Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="3">
+            <!-- Current activity readout -->
+            <TextBlock Text="{Binding Path=CurrentActivity}"/>
+        </StatusBar>
+    </Grid>
+</Window>

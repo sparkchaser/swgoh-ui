@@ -1,0 +1,94 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.UnitLookupView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:goh_ui"
+                  Title="Unit Lookup"
+                  Height="400"
+                  Width="400">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:FormattedNumberConverter x:Key="Fmt"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid Margin="3">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Unit selection -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0">
+            <Label Content="Select Unit"/>
+            <ComboBox ItemsSource="{Binding Path=Units}"
+                      SelectedItem="{Binding Path=SelectedUnit}"
+                      Width="220"/>
+        </StackPanel>
+        
+        <!-- Results count -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1">
+            <StackPanel.Style>
+                <Style TargetType="{x:Type StackPanel}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=ResultCount}" Value="0">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Label Content="{Binding Path=ResultCount}"/>
+            <Label Content="matches"/>
+        </StackPanel>
+        
+        <!-- Results table -->
+        <ListView Grid.Row="2"
+                  Margin="5"
+                  ItemsSource="{Binding Path=ResultsList}"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  local:GridViewSort.AutoSort="True"
+                  ItemContainerStyle="{StaticResource StretchColumn}">
+            <ListView.Resources>
+                <DataTemplate x:Key="Level">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Level}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="Stars">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Stars}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="GearLevel">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=GearLevelDescriptive}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="Power">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+            </ListView.Resources>
+
+            <ListView.View>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn Header="Player"
+                                    Width="160"
+                                    DisplayMemberBinding="{Binding Path=Player}"
+                                    local:GridViewSort.PropertyName="Player"/>
+                    <GridViewColumn Header="Level"
+                                    CellTemplate="{StaticResource Level}"
+                                    local:GridViewSort.PropertyName="Level"/>
+                    <GridViewColumn Header="Stars"
+                                    CellTemplate="{StaticResource Stars}"
+                                    local:GridViewSort.PropertyName="Stars"/>
+                    <GridViewColumn Header="Gear"
+                                    CellTemplate="{StaticResource GearLevel}"
+                                    local:GridViewSort.PropertyName="GearLevelSortable"/>
+                    <GridViewColumn Header="Power"
+                                    CellTemplate="{StaticResource Power}"
+                                    local:GridViewSort.PropertyName="Power"/>
+                </GridView>
+            </ListView.View>
+
+        </ListView>
+    </Grid>
+</local:ToolWindow>

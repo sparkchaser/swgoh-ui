@@ -1,0 +1,102 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.RosterView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:goh_ui"
+                  Title="Guild Roster"
+                  Height="460"
+                  Width="600">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:FormattedNumberConverter x:Key="Fmt"/>
+            
+            <!-- Custom styles/templates for columns. -->
+            <DataTemplate x:Key="TotalGP">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Power, Converter={StaticResource Fmt}}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="CharGP">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=CharacterPower, Converter={StaticResource Fmt}}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="MeaningfulGP">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MeaningfulPower, Converter={StaticResource Fmt}}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="MetaGP">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MetaPower, Converter={StaticResource Fmt}}"/>
+            </DataTemplate>
+            <DataTemplate x:Key="TWIndex">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=TwEfficiency}"/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Guild name label -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3">
+            <Label Content="Guild Roster for "/>
+            <Label Content="{Binding Path=GuildName}" FontWeight="Bold"/>
+        </StackPanel>
+        
+        <!-- Guild member list -->
+        <ListView Grid.Row="1"
+                  x:Name="lv"
+                  ItemsSource="{Binding Path=Members}"
+                  MinHeight="60"
+                  Margin="5"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  local:GridViewSort.AutoSort="True">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource StretchColumn}">
+                    <!-- Open details view on double-click -->
+                    <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_DoubleClick"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <!-- Define columns -->
+            <ListView.View>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn Header="Name"
+                                    DisplayMemberBinding="{Binding Path=Name}"
+                                    local:GridViewSort.PropertyName="Name"/>
+
+                    <GridViewColumn Header="Total GP"
+                                    Width="80"
+                                    CellTemplate="{StaticResource TotalGP}"
+                                    local:GridViewSort.PropertyName="Power"/>
+
+                    <GridViewColumn Header="Character GP"
+                                    Width="80"
+                                    CellTemplate="{StaticResource CharGP}"
+                                    local:GridViewSort.PropertyName="CharacterPower"/>
+
+                    <GridViewColumn Header="Meaningful GP"
+                                    Width="100"
+                                    CellTemplate="{StaticResource MeaningfulGP}"
+                                    local:GridViewSort.PropertyName="MeaningfulPower"/>
+
+                    <!-- Hide columns for features that aren't fully thought-out yet -->
+                    <!--
+                    <GridViewColumn Header="Meta GP"
+                                    Width="60"
+                                    CellTemplate="{StaticResource MetaGP}"
+                                    local:GridViewSort.PropertyName="MetaPower"/>
+
+                    <GridViewColumn Header="TW Index"
+                                    Width="70"
+                                    CellTemplate="{StaticResource TWIndex}"
+                                    local:GridViewSort.PropertyName="TwEfficiency"/>
+                    -->
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</local:ToolWindow>

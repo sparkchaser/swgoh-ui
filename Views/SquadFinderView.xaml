@@ -1,0 +1,172 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.SquadFinderView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:goh_ui"
+                  xmlns:views="clr-namespace:goh_ui.Views"
+                  Title="Squad Lookup"
+                  Height="400"
+                  Width="600"
+                  x:Name="toplevel">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolVis"/>
+            <local:FormattedNumberConverter x:Key="Fmt"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Menu bar -->
+        <Menu IsMainMenu="True"
+              Grid.Row="0"
+              IsEnabled="{Binding Path=ShowPresets}"
+              Visibility="{Binding Path=ShowPresets, Converter={StaticResource BoolVis}}">
+            <MenuItem Header="_Presets" x:Name="PresetsMenu" ItemsSource="{Binding Path=PresetsList}">
+                <MenuItem.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="MenuItem.Header" Value="{Binding Name}"/>
+                        <Setter Property="MenuItem.Command" Value="{Binding Path=PresetClickHandler, RelativeSource={RelativeSource AncestorType=views:SquadFinderView}}"/>
+                        <Setter Property="MenuItem.CommandParameter" Value="{Binding Name}"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+            </MenuItem>
+        </Menu>
+        
+        <!-- Squad selection -->
+        <StackPanel Grid.Row="1" Orientation="Vertical">
+            <Label Content="Select Squad"/>
+            <Grid Grid.IsSharedSizeScope="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="B"/>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="B"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Label Content="Leader" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right"/>
+                <Label Content="Unit 2" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Right"/>
+                <Label Content="Unit 3" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right"/>
+                <Label Content="Unit 4" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right"/>
+                <Label Content="Unit 5" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Right"/>
+
+                <ComboBox Grid.Row="0" Grid.Column="1"
+                          ItemsSource="{Binding Path=Units}"
+                          SelectedItem="{Binding Path=SelectedUnit1}"
+                          Width="220"/>
+                <ComboBox Grid.Row="0" Grid.Column="3"
+                          ItemsSource="{Binding Path=Units}"
+                          SelectedItem="{Binding Path=SelectedUnit2}"
+                          Width="220"/>
+                <ComboBox Grid.Row="1" Grid.Column="1"
+                          ItemsSource="{Binding Path=Units}"
+                          SelectedItem="{Binding Path=SelectedUnit3}"
+                          Width="220"/>
+                <ComboBox Grid.Row="1" Grid.Column="3"
+                          ItemsSource="{Binding Path=Units}"
+                          SelectedItem="{Binding Path=SelectedUnit4}"
+                          Width="220"/>
+                <ComboBox Grid.Row="2" Grid.Column="1"
+                          ItemsSource="{Binding Path=Units}"
+                          SelectedItem="{Binding Path=SelectedUnit5}"
+                          Width="220"/>
+
+                <Button Grid.Row="2"
+                        Grid.Column="3"
+                        Content="Search"
+                        Command="{Binding Path=SearchCommand}"
+                        Height="24"
+                        Width="86"
+                        VerticalAlignment="Center"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- Results view -->
+        <ListView Grid.Row="2"
+                  Margin="5"
+                  ItemsSource="{Binding Path=SearchResults}"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  local:GridViewSort.AutoSort="True"
+                  ItemContainerStyle="{StaticResource StretchColumn}">
+            <ListView.Resources>
+                <DataTemplate x:Key="TotalPower">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=TotalPower, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="PUnit1">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit1.Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="PUnit2">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit2.Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="PUnit3">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit3.Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="PUnit4">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit4.Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+                <DataTemplate x:Key="PUnit5">
+                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit5.Power, Converter={StaticResource Fmt}}"/>
+                </DataTemplate>
+            </ListView.Resources>
+
+            <ListView.View>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn Header="Player"
+                                    Width="160"
+                                    DisplayMemberBinding="{Binding Path=Player}"
+                                    local:GridViewSort.PropertyName="Player"/>
+                    <GridViewColumn Header="Total Power"
+                                    CellTemplate="{StaticResource TotalPower}"
+                                    local:GridViewSort.PropertyName="TotalPower"/>
+                    <GridViewColumn Header="Leader"
+                                    CellTemplate="{StaticResource PUnit1}"
+                                    local:GridViewSort.PropertyName="Unit1.Power"/>
+                    <GridViewColumn Header="Unit 2"
+                                    CellTemplate="{StaticResource PUnit2}"
+                                    local:GridViewSort.PropertyName="Unit2.Power"/>
+                    <GridViewColumn Header="Unit 3"
+                                    CellTemplate="{StaticResource PUnit3}"
+                                    local:GridViewSort.PropertyName="Unit3.Power"/>
+                    <GridViewColumn Header="Unit 4"
+                                    CellTemplate="{StaticResource PUnit4}"
+                                    local:GridViewSort.PropertyName="Unit4.Power"/>
+                    <GridViewColumn Header="Unit 5"
+                                    CellTemplate="{StaticResource PUnit5}"
+                                    local:GridViewSort.PropertyName="Unit5.Power"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        
+        <!-- Result count display -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal">
+            <StackPanel.Style>
+                <Style TargetType="{x:Type StackPanel}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=ResultCount}" Value="0">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            
+            <Label Content="{Binding Path=ResultCount}"/>
+            <Label Content="matching squads"/>
+        </StackPanel>
+    </Grid>
+</local:ToolWindow>
