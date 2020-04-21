@@ -10,7 +10,8 @@ namespace goh_ui
     // The classes are suitable for JSON serialization.
     // Adapted from: https://gist.github.com/dwcullop/9c6b7933fe23163e59b94da1997adee7
 
-
+    #region Data from the 'Login' command
+    
     /// <summary>
     /// API response to a login request.
     /// </summary>
@@ -23,6 +24,9 @@ namespace goh_ui
         public int expires_in { get; set; }
     }
 
+    #endregion
+
+    #region Data from the 'Get Player Info' command
 
     /// <summary>
     /// Metadata for a player's account.
@@ -117,11 +121,22 @@ namespace goh_ui
         /// <summary> Internal ID used by the game. </summary>
         public string id { get; set; }
         /// <summary> Semi-human-readable name for this unit. </summary>
-        /// <remarks>Currently not filled in, use id to look up.</remarks>
-        public string name { get; set; }
-        /// <summary> Type of unit. </summary>
-        /// <remarks>Currently not filled in, use id to look up.</remarks>
-        public string type { get; set; }
+        public string defId { get; set; }
+        /// <summary> Describes the type of slot this unit is assigned to. </summary>
+        public string squadUnitType { get; set; }
+
+        #region Squad Unit Type constants
+
+        /// <summary> This character is in the leader slot. </summary>
+        public static readonly string UNITTYPE_SQUAD_LEADER  = "UNITTYPELEADER";
+        /// <summary> This character or ship is not in a special slot. </summary>
+        public static readonly string UNITTYPE_NORMAL        = "UNITTYPEDEFAULT";
+        /// <summary> This ship is a capital ship. </summary>
+        public static readonly string UNITTYPE_CAPITAL_SHIP  = "UNITTYPECOMMANDER";
+        /// <summary> This ship is in a reinforcement slot. </summary>
+        public static readonly string UNITTYPE_REINFORCEMENT = "UNITTYPEREINFORCEMENT";
+
+        #endregion
     }
 
     /// <summary>
@@ -136,7 +151,6 @@ namespace goh_ui
         /// <summary> Localized unit name. </summary>
         [JsonProperty("nameKey")]
         public string name { get; set; }
-        //public string type { get; set; }
         /// <summary> Star level. </summary>
         public int rarity { get; set; }
         /// <summary> Character level. </summary>
@@ -201,6 +215,13 @@ namespace goh_ui
         /// </remarks>
         public long TruePower { get; set; }
         #endregion
+
+        #region CombatType constants
+
+        public static readonly string COMBATTYPE_CHARACTER = "CHARACTER";
+        public static readonly string COMBATTYPE_SHIP      = "SHIP";
+
+        #endregion
     }
 
     /// <summary>
@@ -224,15 +245,18 @@ namespace goh_ui
         /// <summary> Internal game ID for this piece of gear; </summary>
         public string equipmentId { get; set; }
         /// <summary> Indicates which gear slot this item is assigned to. </summary>
-        /// <remarks>
-        /// Slot 0: top left
-        /// Slot 1: middle left
-        /// Slot 2: bottom left
-        /// Slot 3: top right
-        /// Slot 4: middle right
-        /// Slot 5: bottom right
-        /// </remarks>
         public int slot { get; set; }
+
+        #region Slot constants
+
+        public static readonly int SLOT_TOP_LEFT  = 0;
+        public static readonly int SLOT_MID_LEFT  = 1;
+        public static readonly int SLOT_BOT_LEFT  = 2;
+        public static readonly int SLOT_TOP_RIGHT = 3;
+        public static readonly int SLOT_MID_RIGHT = 4;
+        public static readonly int SLOT_BOT_RIGHT = 5;
+
+        #endregion
     }
 
     /// <summary>
@@ -261,9 +285,6 @@ namespace goh_ui
         /// <summary> The 'defId' for this character. </summary>
         public string unitId { get; set; }
         /// <summary> Which crew member slot this character fits into. </summary>
-        /// 1: top left
-        /// 2: bottom left
-        /// 3: top right
         public int slot { get; set; }
         /// <summary> The ship ability contributed by this crew member. </summary>
         public SkillReference[] skillReferenceList { get; set; }
@@ -271,6 +292,14 @@ namespace goh_ui
         public float cp { get; set; }
         /// <summary> This character's Galactic Power. </summary>
         public float gp { get; set; }
+
+        #region Slot constants
+
+        public static readonly string SLOT_TOP_LEFT    = "1";
+        public static readonly string SLOT_BOTTOM_LEFT = "2";
+        public static readonly string SLOT_TOP_RIGHT   = "3";
+
+        #endregion
     }
 
     /// <summary>
@@ -294,28 +323,10 @@ namespace goh_ui
         /// <summary> Game's internal ID for this mod. </summary>
         public string id { get; set; }
         /// <summary> Which slot this mod goes in. </summary>
-        /// <remarks>
-        /// 1: Square
-        /// 2: Arrow
-        /// 3: Diamond
-        /// 4: Triangle
-        /// 5: Circle
-        /// 6: Cross
-        /// </remarks>
         public string slot { get; set; }
         // Currently unused
         public int setId { get; set; }
         /// <summary> Which set this mod belongs to. </summary>
-        /// <remarks>
-        /// 1: Health
-        /// 2: Offense
-        /// 3: Defense
-        /// 4: Speed
-        /// 5: Crit Chance
-        /// 6: Crit Damage
-        /// 7: Potency
-        /// 8: Tenacity
-        /// </remarks>
         public string set { get; set; }
         /// <summary> Mod level. </summary>
         public int level { get; set; }
@@ -334,7 +345,31 @@ namespace goh_ui
         public string secondaryValue_3 { get; set; }
         public string secondaryType_4 { get; set; }
         public string secondaryValue_4 { get; set; }
-        
+
+        #endregion
+
+        #region Slot ID constants
+
+        public static readonly string SLOT_SQUARE   = "1";
+        public static readonly string SLOT_ARROW    = "2";
+        public static readonly string SLOT_DIAMOND  = "3";
+        public static readonly string SLOT_TRIANGLE = "4";
+        public static readonly string SLOT_CIRCLE   = "5";
+        public static readonly string SLOT_CROSS    = "6";
+
+        #endregion
+
+        #region Set constants
+
+        public static readonly string SET_HEALTH      = "1";
+        public static readonly string SET_OFFENSE     = "2";
+        public static readonly string SET_DEFENSE     = "3";
+        public static readonly string SET_SPEED       = "4";
+        public static readonly string SET_CRIT_CHANGE = "5";
+        public static readonly string SET_CRIT_DAMAGE = "6";
+        public static readonly string SET_POTENCY     = "7";
+        public static readonly string SET_TENACITY    = "8";
+
         #endregion
     }
 
@@ -357,6 +392,9 @@ namespace goh_ui
         public int rank { get; set; }
     }
 
+    #endregion
+
+    #region Data from the 'Get Guild Info' command
 
     /// <summary>
     /// Information for a guild.
@@ -430,12 +468,16 @@ namespace goh_ui
 
         #region Member Level constants
 
-        static readonly string LEVEL_MEMBER = "GUILDMEMBER";
-        static readonly string LEVEL_OFFICER = "GUILDOFFICER";
-        static readonly string LEVEL_LEADER = "GUILDLEADER";
+        public static readonly string LEVEL_MEMBER = "GUILDMEMBER";
+        public static readonly string LEVEL_OFFICER = "GUILDOFFICER";
+        public static readonly string LEVEL_LEADER = "GUILDLEADER";
 
         #endregion
     }
+
+    #endregion
+
+    #region Data from the 'Get Game Data' command
 
     /// <summary>
     /// Information about an unlockable player title.
@@ -486,6 +528,10 @@ namespace goh_ui
         public string value { get; set; }
     }
 
+    #endregion
+
+    #region Command payloads
+
     /// <summary>
     /// Command to fetch information for a player or guild.
     /// </summary>
@@ -522,6 +568,9 @@ namespace goh_ui
         #endregion
     }
 
+    #endregion
+
+    #region Import/export serialization helpers
 
     /// <summary>
     /// Wrapper class used to serialize a complete information set.
@@ -533,4 +582,6 @@ namespace goh_ui
         /// <summary> Data for each guild member. </summary>
         public PlayerInfo[] players { get; set; }
     }
+    
+    #endregion
 }

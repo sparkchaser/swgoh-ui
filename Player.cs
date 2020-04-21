@@ -146,7 +146,7 @@ namespace goh_ui
             // Filter down to what's usable in TW
             var relevant = Roster.Where(c =>
             {
-                return c.combatType == "CHARACTER" &&
+                return c.combatType == Character.COMBATTYPE_CHARACTER &&
                        c.level >= 85 &&
                        c.rarity >= 7 &&
                        c.gear >= 10 &&

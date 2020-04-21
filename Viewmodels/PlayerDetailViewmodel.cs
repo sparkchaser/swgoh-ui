@@ -40,8 +40,8 @@ namespace goh_ui.Viewmodels
             if (!(d is PlayerDetailViewmodel vm))
                 return;
             // When Player gets updated, re-generate the derived roster views
-            vm.Ships = vm.Player.Roster.Where(x => x.combatType == "SHIP").ToList();
-            vm.Characters = vm.Player.Roster.Where(x => x.combatType == "CHARACTER").ToList();
+            vm.Ships = vm.Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_SHIP).ToList();
+            vm.Characters = vm.Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_CHARACTER).ToList();
             vm.WindowTitle = $"Player Details - {vm.Player.Name}";
 
             // Build list of zetas

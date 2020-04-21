@@ -540,7 +540,7 @@ namespace goh_ui
                             foreach (var character in player.roster)
                             {
                                 character.TruePower = character.gp;
-                                if (character.combatType == "CHARACTER" && character.gear >= 13 && character.relic.currentTier > 2)
+                                if (character.combatType == Character.COMBATTYPE_CHARACTER && character.gear >= 13 && character.relic.currentTier > 2)
                                 {
                                     character.TruePower += (long)Math.Round(relic_modifiers[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
                                 }

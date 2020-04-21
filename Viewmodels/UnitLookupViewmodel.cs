@@ -42,7 +42,7 @@ namespace goh_ui.Viewmodels
             var dict = new List<string>();
             foreach (var member in pl)
             {
-                foreach (var unit in member.Roster.Where(c => c.combatType == "CHARACTER" && !dict.Contains(c.name)))
+                foreach (var unit in member.Roster.Where(c => c.combatType == Character.COMBATTYPE_CHARACTER && !dict.Contains(c.name)))
                 {
                     dict.Add(unit.name);
                 }
