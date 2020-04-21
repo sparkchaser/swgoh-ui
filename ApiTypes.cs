@@ -550,6 +550,7 @@ namespace goh_ui
         #endregion
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     /// <summary>
     /// Command to fetch a collection of misc game data.
     /// </summary>
@@ -566,6 +567,15 @@ namespace goh_ui
         public bool enums { get; set; } = true;
 
         #endregion
+
+        /// <summary> (Optional) Filter results to entries that match the specified criteria. </summary>
+        /// <remarks>
+        /// Each entry's "key" is a property name on the target object, and the "value" is the
+        /// expected value for that property.  Only entries who have the specified value for
+        /// the specified property will be included in the results.  See the swgoh.help API
+        /// documentation for details and examples.
+        /// </remarks>
+        public Dictionary<string, object> match { get; set; } = null;
     }
 
     #endregion

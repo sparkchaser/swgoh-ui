@@ -230,7 +230,12 @@ namespace goh_ui
             string resp;
             try
             {
-                resp = await MakeApiRequest(new GameDataCommand() { collection = "tableList" }, URL_DATA);
+                var payload = new GameDataCommand() { collection = "tableList" };
+                payload.match = new Dictionary<string, object>()
+                {
+                    { "id", "galactic_power_per_relic_tier" }
+                };
+                resp = await MakeApiRequest(payload, URL_DATA);
             }
             catch (ApiErrorException e)
             {
@@ -244,13 +249,10 @@ namespace goh_ui
                 return new int[] { };
             }
 
-            var match = retval.FirstOrDefault(table => table.id == "galactic_power_per_relic_tier");
-            if (match == null || match.rowList.Count() == 0)
-                return new int[] { };
-
-            return match.rowList.Select(r => int.TryParse(r.value, out int val) ? val : -1)
-                                .OrderBy(x => x)
-                                .ToArray();
+            return retval.First().rowList
+                         .Select(r => int.TryParse(r.value, out int val) ? val : -1)
+                         .OrderBy(x => x)
+                         .ToArray();
         }
 
         /// <summary> POST a request to the web API and return the result as a string. </summary>
