@@ -104,7 +104,7 @@ namespace goh_ui
     public class Ranking
     {
         /// <summary> Current ranking. </summary>
-        public int rank { get; set; }
+        public int? rank { get; set; }
         /// <summary> Current team. </summary>
         public Squad[] squad { get; set; }
     }
