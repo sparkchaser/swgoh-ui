@@ -350,7 +350,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new UnitLookupViewmodel(Members);
+            var vm = new UnitLookupViewmodel(Members, unitDetails?.ToList());
             var view = new UnitLookupView(vm) { Owner = parent };
             view.ShowDialog();
         }
@@ -365,7 +365,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new SquadFinderViewmodel(Members);
+            var vm = new SquadFinderViewmodel(Members, unitDetails?.ToList());
             var view = new SquadFinderView(vm) { Owner = parent };
             view.ShowDialog();
         }

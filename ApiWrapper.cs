@@ -295,6 +295,9 @@ namespace goh_ui
                 return new UnitDetails[] { };
             }
 
+            // Delete several units that aren't actually obtainable
+            units = units.Where(u => !u.baseId.EndsWith("_DUEL") && !u.baseId.EndsWith("_GLEVENT") && u.baseId != "AWAKENEDREY").ToArray();
+
             // Now fetch the 'categoryList' table
             resp = null;
             try

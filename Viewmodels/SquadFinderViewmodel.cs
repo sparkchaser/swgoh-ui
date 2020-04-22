@@ -22,9 +22,10 @@ namespace goh_ui.Viewmodels
         }
 
 
-        public SquadFinderViewmodel(PlayerList members)
+        public SquadFinderViewmodel(PlayerList members, List<UnitDetails> unitDetails)
         {
             Members = members ?? throw new ArgumentNullException("members");
+            UnitDetails = unitDetails;
 
             SearchCommand = new SimpleCommand(DoSearch);
 
@@ -40,6 +41,9 @@ namespace goh_ui.Viewmodels
         /// <summary> List of all known units. </summary>
         public List<string> Units { get; private set; }
 
+        /// <summary> List of detailed metadata for all defined units. </summary>
+        public List<UnitDetails> UnitDetails { get; private set; }
+
         /// <summary> Rebuild unit list after a roster change. </summary>
         public void PlayerListUpdated()
         {
@@ -49,16 +53,22 @@ namespace goh_ui.Viewmodels
                 return;
             }
 
-            var dict = new List<string>();
-            foreach (var member in Members)
+            // Use UnitDetails if available, since it can contain units not found
+            // in any player's roster.
+            if (UnitDetails != null && UnitDetails.Count > 0)
             {
-                foreach (var unit in member.Roster.Where(c => c.combatType == Character.COMBATTYPE_CHARACTER && !dict.Contains(c.name)))
-                {
-                    dict.Add(unit.name);
-                }
+                Units = UnitDetails.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER).Select(u => u.name).ToList();
+                Units.Sort();
+                return;
             }
-            dict.Sort();
-            Units = dict;
+
+            // If UnitDetails not available, derive a list by combining the members' rosters.
+            Units = Members.Select(m => m.Roster.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER)
+                                                .Select(c => c.name)) // map each member to an array of unit names
+                           .SelectMany(x => x) // flatten list
+                           .Distinct()         // de-duplicate
+                           .ToList();
+            Units.Sort();
         }
 
 
