@@ -164,8 +164,8 @@ namespace goh_ui
             }
             catch (ApiErrorException e)
             {
-                if (e.Response.ReasonPhrase != "None") // Don't error if player not in guild
-                    DisplayError(e.Response.ReasonPhrase, "Guild Info");
+                if (e.Response == null || e.Response.ReasonPhrase != "None") // Don't error if player not in guild
+                    DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Guild Info");
                 return null;
             }
 
@@ -189,7 +189,7 @@ namespace goh_ui
             }
             catch (ApiErrorException e)
             {
-                DisplayError(e.Response.ReasonPhrase, "Player Info");
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Player Info");
                 return null;
             }
 
@@ -212,7 +212,7 @@ namespace goh_ui
             }
             catch (ApiErrorException e)
             {
-                DisplayError(e.Response.ReasonPhrase, "Title Info");
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Title Info");
                 return null;
             }
 
@@ -240,7 +240,7 @@ namespace goh_ui
             }
             catch (ApiErrorException e)
             {
-                DisplayError(e.Response.ReasonPhrase, "Relic Info");
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Relic Info");
                 return new int[] { };
             }
 
@@ -278,7 +278,16 @@ namespace goh_ui
             msg.Content = new StringContent(data, System.Text.Encoding.UTF8, "application/json");
 
             // Send request
-            var result = await client.SendAsync(msg);
+            HttpResponseMessage result;
+            try
+            {
+                result = await client.SendAsync(msg);
+            }
+            catch (TaskCanceledException e)
+            {
+                throw new ApiErrorException(null, "Request timeout", e);
+            }
+
             if (!result.IsSuccessStatusCode)
             {
                 throw new ApiErrorException(result);

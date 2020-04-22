@@ -550,7 +550,18 @@ namespace goh_ui
                 // Run both tasks in parallel and wait for them to complete
                 CurrentActivity = "Fetching game data";
                 DebugMessage($"Game Data: Start");
-                await Task.WhenAll(new Task[]{ title_task, relic_task });
+                try
+                {
+                    await Task.WhenAll(new Task[] { title_task, relic_task });
+                }
+                catch (Exception e)
+                {
+                    string msg = $"Error fetching game data:\n{e.Message}";
+                    DebugMessage(msg);
+                    ShowError(msg);
+                    CurrentActivity = "No data available";
+                    return;
+                }
 
 
                 // Build roster
