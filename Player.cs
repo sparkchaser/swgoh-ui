@@ -80,15 +80,6 @@ namespace goh_ui
         }
         public static readonly DependencyProperty MeaningfulPowerProperty = _dp<long>("MeaningfulPower");
 
-        /// <summary> Galactic power for current meta characters. </summary>
-        public long MetaPower
-        {
-            get { return (long)GetValue(MetaPowerProperty); }
-            set { SetValue(MetaPowerProperty, value); }
-        }
-        public static readonly DependencyProperty MetaPowerProperty = _dp<long>("MetaPower");
-
-
         /// <summary> Index measuring how well the total GP indicates usefulness in TW. </summary>
         public double TwEfficiency
         {
@@ -157,11 +148,6 @@ namespace goh_ui
             MeaningfulPower = relevant.Select(c => c.gp).Sum();
 
             TwEfficiency = Math.Round(((double)MeaningfulPower / Power) * 100.0, 2);
-
-            // Filter down to those currently "in the meta"
-            MetaPower = relevant.Where(c => MetaCharacters.Contains(c.defId))
-                                .Select(c => c.gp)
-                                .Sum();
         }
 
         /// <summary> List of characters that serve no point whatsoever. </summary>
@@ -181,15 +167,6 @@ namespace goh_ui
             "ROSETICO",
             "EETHKOTH",
             "KITFISTO"
-        };
-
-        /// <summary> List of characters currently considered "meta". </summary>
-        /// <remarks>By definition, this will be out of data often.</remarks>
-        private readonly List<string> MetaCharacters = new List<string>()
-        {
-            "JEDIKNIGHTREVAN",
-            "DARTHREVAN"
-            // TBD
         };
     }
 }

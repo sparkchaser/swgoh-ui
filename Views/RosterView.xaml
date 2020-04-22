@@ -23,9 +23,6 @@
             <DataTemplate x:Key="MeaningfulGP">
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MeaningfulPower, Converter={StaticResource Fmt}}"/>
             </DataTemplate>
-            <DataTemplate x:Key="MetaGP">
-                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MetaPower, Converter={StaticResource Fmt}}"/>
-            </DataTemplate>
             <DataTemplate x:Key="TWIndex">
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=TwEfficiency}"/>
             </DataTemplate>
@@ -85,11 +82,6 @@
 
                     <!-- Hide columns for features that aren't fully thought-out yet -->
                     <!--
-                    <GridViewColumn Header="Meta GP"
-                                    Width="60"
-                                    CellTemplate="{StaticResource MetaGP}"
-                                    local:GridViewSort.PropertyName="MetaPower"/>
-
                     <GridViewColumn Header="TW Index"
                                     Width="70"
                                     CellTemplate="{StaticResource TWIndex}"
