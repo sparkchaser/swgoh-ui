@@ -161,6 +161,8 @@ namespace goh_ui
 
         private GuildInfo guild;
 
+        private UnitDetails[] unitDetails;
+
         /// <summary> Unprocessed player data as returned by the API.  Only use for serialization purposes. </summary>
         private List<PlayerInfo> rawPlayerInfo;
 
@@ -201,7 +203,11 @@ namespace goh_ui
 
         /// <summary> Display an error message in a dialog box. </summary>
         /// <param name="message">Message to display.</param>
-        private void ShowError(string message) => MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        private void ShowError(string message)
+        {
+            DebugMessage(message);
+            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
 
         /// <summary> Indicates whether all guild and player data has been successfully retrieved. </summary>
         public bool IsAllDataAvailable()
@@ -497,7 +503,7 @@ namespace goh_ui
                     {
                         task.Exception.Handle(e =>
                         {
-                            if (e is Newtonsoft.Json.JsonReaderException)
+                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
                                 ShowError($"Error deserializing JSON:\n{e.Message}");
                             else
                                 ShowError($"Error fetching titles:\n{e.Message}");
@@ -519,7 +525,7 @@ namespace goh_ui
                     {
                         task.Exception.Handle(e =>
                         {
-                            if (e is Newtonsoft.Json.JsonReaderException)
+                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
                                 ShowError($"Error deserializing JSON:\n{e.Message}");
                             else
                                 ShowError($"Error fetching relic metadata:\n{e.Message}");
@@ -547,18 +553,38 @@ namespace goh_ui
                     }
                 });
 
-                // Run both tasks in parallel and wait for them to complete
+                // Build task to fetch detailed character metadata
+                var units_task = api.GetUnitDetails();
+                var ut = units_task.ContinueWith((task) =>
+                {
+                    DebugMessage($"Unit Data: End");
+                    if (task.IsFaulted)
+                    {
+                        task.Exception.Handle(e =>
+                        {
+                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                                ShowError($"Error deserializing JSON:\n{e.Message}");
+                            else
+                                ShowError($"Error fetching unit metadata:\n{e.Message}");
+                            return true;
+                        });
+
+                        return;
+                    }
+
+                    unitDetails = task.Result;
+                });
+
+                // Run tasks in parallel and wait for them to complete
                 CurrentActivity = "Fetching game data";
                 DebugMessage($"Game Data: Start");
                 try
                 {
-                    await Task.WhenAll(new Task[] { title_task, relic_task });
+                    await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
                 }
                 catch (Exception e)
                 {
-                    string msg = $"Error fetching game data:\n{e.Message}";
-                    DebugMessage(msg);
-                    ShowError(msg);
+                    ShowError($"Error fetching game data:\n{e.Message}");
                     CurrentActivity = "No data available";
                     return;
                 }

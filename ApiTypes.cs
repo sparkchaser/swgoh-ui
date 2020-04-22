@@ -146,7 +146,7 @@ namespace goh_ui
     {
         /// <summary> Game's internal ID. </summary>
         public string id { get; set; }
-        /// <summary> Semi-human-readable name for this unit. </summary>
+        /// <summary> Semi-human-readable name for this unit.  Correlates to <see cref="UnitDetails.baseId"/>. </summary>
         public string defId { get; set; }
         /// <summary> Localized unit name. </summary>
         [JsonProperty("nameKey")]
@@ -528,6 +528,58 @@ namespace goh_ui
         public string value { get; set; }
     }
 
+    /// <summary>
+    /// Detailed information about a unit.
+    /// </summary>
+    public class UnitDetails
+    {
+        /// <summary> Localized unit name. </summary>
+        [JsonProperty("nameKey")]
+        public string name { get; set; }
+        /// <summary> Whether this character is dark- or light-side aligned. </summary>
+        public string forceAlignment { get; set; }
+        /// <summary> Whether this is a character or a ship. </summary>
+        public string combatType { get; set; }
+        /// <summary> Semi-human-readable ID string. Correlate to <see cref="Character.defId"/>. </summary>
+        public string baseId { get; set; }
+        /// <summary> List of categories/tags assigned to this character. </summary>
+        public string[] categoryIdList { get; set; }
+
+        #region ForceAlignment constants
+
+        public static readonly string ALIGNMENT_LIGHT = "LIGHT";
+        public static readonly string ALIGNMENT_DARK  = "DARK";
+
+        #endregion
+
+        #region CombatType constants
+
+        public static readonly string COMBATTYPE_CHARACTER = "CHARACTER";
+        public static readonly string COMBATTYPE_SHIP = "SHIP";
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Details about a category/tag that can be assigned to a unit.
+    /// </summary>
+    public class Category
+    {
+        /// <summary> ID for this category, cross-reference with <see cref="UnitDetails.categoryIdList"/>. </summary>
+        public string id { get; set; }
+        /// <summary> Localized description for this category. </summary>
+        /// <remarks> For some non-visible categories, this might be a placeholder. </remarks>
+        public string descKey { get; set; }
+        /// <summary> Whether this category is visible to the user in-game. </summary>
+        public bool visible { get; set; }
+        /// <summary> Indicates which types of unit filters should include this category. </summary>
+        /// <remarks>
+        ///  1: Use this category when sorting characters
+        ///  2: Use this category when sorting ships
+        /// </remarks>
+        public int[] uiFilterList { get; set; }
+    }
+
     #endregion
 
     #region Command payloads
@@ -576,6 +628,10 @@ namespace goh_ui
         /// documentation for details and examples.
         /// </remarks>
         public Dictionary<string, object> match { get; set; } = null;
+
+        /// <summary> (Optional) Alter the returned data's format by cherry-picking fields or generating computed fields. </summary>
+        /// <remarks> This is directly passed to the 'project' operator in MongoDB. See the MongoDB docs for details. </remarks>
+        public Dictionary<string, object> project { get; set; } = null;
     }
 
     #endregion

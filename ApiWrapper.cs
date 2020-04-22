@@ -256,6 +256,146 @@ namespace goh_ui
                          .ToArray();
         }
 
+        /// <summary> Retrieve misc. data about each defined character. </summary>
+        /// <remarks> This data is not included in what gets returned for a player's roster. </remarks>
+        public async Task<UnitDetails[]> GetUnitDetails()
+        {
+            string resp;
+            try
+            {
+                // This table contains an enormous amount of information.
+                // To avoid downloading hundreds of MB of data, filter down to
+                // only one version of each player-unlockable character, then
+                // limit the fields returned to the few that we can actually use.
+                var payload = new GameDataCommand() { collection = "unitsList" };
+                payload.match = new Dictionary<string, object>()
+                {
+                    { "obtainable", true },
+                    { "rarity", 7 }
+                };
+                payload.project = new Dictionary<string, object>()
+                {
+                    { "baseId", 1 },
+                    { "forceAlignment", 1 },
+                    { "combatType", 1 },
+                    { "categoryIdList", 1 },
+                    { "nameKey", 1 }
+                };
+                resp = await MakeApiRequest(payload, URL_DATA);
+            }
+            catch (ApiErrorException e)
+            {
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Relic Info");
+                return new UnitDetails[] { };
+            }
+
+            UnitDetails[] units = JsonConvert.DeserializeObject<UnitDetails[]>(resp);
+            if (units == null || units.Length == 0)
+            {
+                return new UnitDetails[] { };
+            }
+
+            // Now fetch the 'categoryList' table
+            resp = null;
+            try
+            {
+                var payload = new GameDataCommand() { collection = "categoryList" };
+                resp = await MakeApiRequest(payload, URL_DATA);
+            }
+            catch (ApiErrorException e)
+            {
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Relic Info");
+                return new UnitDetails[] { };
+            }
+
+            Category[] categories = JsonConvert.DeserializeObject<Category[]>(resp);
+            if (categories == null || categories.Length == 0)
+            {
+                return new UnitDetails[] { };
+            }
+
+            // Map "categoryIdList" values to localized strings
+            foreach (var unit in units)
+            {
+                List<string> newtags = new List<string>();
+                foreach (string cat in unit.categoryIdList)
+                {
+                    // Ignore "self-tags", they're not interesting to us
+                    if (cat.StartsWith("selftag_"))
+                        continue;
+
+                    var match = categories.FirstOrDefault(c => c.id == cat);
+                    if (match != null)
+                    {
+                        //if (!match.visible) // disable for now, this info might be interesting
+                        //    continue;
+                        if (match.descKey != "Placeholder" && !match.descKey.Contains("_"))
+                            newtags.Add(match.descKey);
+                        // Add manual translation for interesting hidden categories with no official description
+                        else if (missing_category_translations.ContainsKey(match.id))
+                            newtags.Add(missing_category_translations[match.id]);
+                    }
+                }
+                unit.categoryIdList = newtags.Distinct().OrderBy(c => c).ToArray();
+            }
+
+            return units;
+        }
+
+        /// <summary> Category-to-description mappings that are missing from the official game data. </summary>
+        private static readonly Dictionary<string, string> missing_category_translations = new Dictionary<string, string>()
+        {
+            { "summoned_unit", "Summoned" },
+            { "shipclass_fighter", "Fighter" },
+            { "shipclass_freighter", "Freighter" },
+            { "shipclass_capitalship", "Capital Ship" },
+            { "shipclass_corvette", "Corvette" },
+            { "shipclass_dreadnaught", "Dreadnaught" },
+            { "cannot_evade", "Cannot Evade" },
+            { "suppress_death", "Suppress Death" },
+            { "percent_health_resistant", "Percent Health Resistant" },
+            { "reduced_massive_damage", "Reduced Massive Damage" },
+            { "category_pacifist", "Pacifist" },
+            { "no_recovery", "No Recovery" },
+            { "role_none", "No Role" },
+            { "affiliation_galactic_republic_jedi", "Galactic Republic Jedi" },
+            { "affiliation_501st_clone", "501st Clone Trooper" },
+            { "affiliation_separatist_droid", "Separatist Droid" },
+            { "affiliation_fomilitary", "First Order Military" },
+            { "affiliation_foexecutionsquad", "First Order Execution Squad" },
+            { "affiliation_foties", "First Order TIEs" },
+            { "affiliation_kylos", "Kylo" },
+            { "affiliation_reys", "Rey" },
+            { "affiliation_resistancexwings", "Resistance X-Wings" },
+            { "affiliation_dathbros", "Brothers of Dathomir" },
+            { "affiliation_forcelightning", "Force Lightning" },
+            { "affiliation_sithlord", "Sith Lord" },
+            { "affiliation_palp", "Palpatine" },
+            { "affiliation_order66", "Order 66" },
+            { "affiliation_doubleblade", "Double-bladed Lightsaber" },
+            { "affiliation_sabacc", "Sabacc" },
+            { "affiliation_crimsondawn", "Crimson Dawn" },
+            { "affiliation_smuggled", "Smuggled" },
+            { "affiliation_rebfalconcrew", "Rebel Falcon Crew" },
+            { "affiliation_resfalconcrew", "Resistance Falcon Crew" },
+            { "affiliation_prisfalconcrew", "Original Falcon Crew" },
+            { "unit_xwing", "X-Wing" },
+            { "territory_hoth_hero_rebel", "Hoth Rebel Hero" },
+            { "territory_hoth_empire", "Hoth Empire Hero" },
+            { "territory_geonosis_separatist", "Geonosis Separatist Hero" },
+            { "territory_geonosis_republic", "Geonosis Republic Hero" },
+            { "territory_light_platoon", "TB Platoons - Light" },
+            { "territory_dark_platoon", "TB Platoons - Dark" },
+            { "gac_rebelpilot", "Rebel Pilot" },
+            { "gac_tiepilot", "TIE Pilot" },
+            { "gac_millenniumco-pilot", "Millennium Falcon Co-Pilot" },
+            { "gac_droidpilot", "Droid Pilot" },
+            { "gac_tie", "TIE" },
+            { "gac_wingmate", "Luke's Wingmate" },
+            { "gac_trench", "Trench Run" }
+        };
+
+
         /// <summary> POST a request to the web API and return the result as a string. </summary>
         /// <param name="payload">Command payload (will be serialized to JSON).</param>
         /// <param name="requestUri">Relative URI to send request to.</param>
