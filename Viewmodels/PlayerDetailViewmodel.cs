@@ -7,57 +7,46 @@ namespace goh_ui.Viewmodels
 {
     public class PlayerDetailViewmodel : DependencyObject
     {
-        /// <summary> Helper function to simplify generation of dependency properties. </summary>
-        /// <typeparam name="T">Datatype of property</typeparam>
-        /// <param name="name">Name of property</param>
-        /// <param name="defaultvalue">Default value for property (optional)</param>
-        private static DependencyProperty _dp<T>(string name, object defaultvalue = null)
+
+        public PlayerDetailViewmodel(Player p)
         {
-            if (defaultvalue != null)
-                return DependencyProperty.Register(name, typeof(T), typeof(PlayerDetailViewmodel), new PropertyMetadata(defaultvalue));
-            else
-                return DependencyProperty.Register(name, typeof(T), typeof(PlayerDetailViewmodel));
+            Player = p;
+            PlayerUpdated();
         }
 
 
-        public PlayerDetailViewmodel()
+        /// <summary> Update derived fields after Player is changed. </summary>
+        private void PlayerUpdated()
         {
-        }
-
-
-        #region XAML bind-able properties
-
-        public Player Player
-        {
-            get { return (Player)GetValue(PlayerProperty); }
-            set { SetValue(PlayerProperty, value); }
-        }
-        public static readonly DependencyProperty PlayerProperty =
-            DependencyProperty.Register("Player", typeof(Player), typeof(PlayerDetailViewmodel), new PropertyMetadata(null, PlayerChanged));
-
-        private static void PlayerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (!(d is PlayerDetailViewmodel vm))
+            if (Player == null)
+            {
+                Ships = null;
+                Characters = null;
+                ZetaList = null;
+                StatsList = null;
+                WindowTitle = "Player Details";
                 return;
+            }
+
             // When Player gets updated, re-generate the derived roster views
-            vm.Ships = vm.Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_SHIP).ToList();
-            vm.Characters = vm.Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_CHARACTER).ToList();
-            vm.WindowTitle = $"Player Details - {vm.Player.Name}";
+            Ships = Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_SHIP).ToList();
+            Characters = Player.Roster.Where(x => x.combatType == Character.COMBATTYPE_CHARACTER).ToList();
+            WindowTitle = $"Player Details - {Player.Name}";
 
             // Build list of zetas
             var list = new List<Tuple<string, string>>();
-            foreach (var c in vm.Player.Roster.Where(c => c.NumZetas > 0))
+            foreach (var c in Player.Roster.Where(c => c.NumZetas > 0))
             {
                 foreach (var zeta in c.Zetas)
                 {
                     list.Add(new Tuple<string, string>(c.name, zeta));
                 }
             }
-            vm.ZetaList = list;
+            ZetaList = list;
 
             // Build stats list
             var stats = new List<PlayerStat>();
-            foreach (var s in vm.Player.Stats)
+            foreach (var s in Player.Stats)
             {
                 var this_stat = new PlayerStat
                 {
@@ -90,50 +79,28 @@ namespace goh_ui.Viewmodels
                 }
                 stats.Add(this_stat);
             }
-            vm.StatsList = stats;
+            StatsList = stats;
         }
+
+        
+        #region Public properties
+
+        public Player Player { get; private set; }
 
         /// <summary> Characters in the player's roster. </summary>
-        public List<Character> Characters
-        {
-            get { return (List<Character>)GetValue(CharactersProperty); }
-            set { SetValue(CharactersProperty, value); }
-        }
-        public static readonly DependencyProperty CharactersProperty = _dp<List<Character>>("Characters");
+        public List<Character> Characters { get; set; }
 
         /// <summary> Ships in the player's roster. </summary>
-        public List<Character> Ships
-        {
-            get { return (List<Character>)GetValue(ShipsProperty); }
-            set { SetValue(ShipsProperty, value); }
-        }
-        public static readonly DependencyProperty ShipsProperty = _dp<List<Character>>("Ships");
+        public List<Character> Ships { get; set; }
 
         /// <summary> Dynamic window title. </summary>
-        public string WindowTitle
-        {
-            get { return (string)GetValue(WindowTitleProperty); }
-            set { SetValue(WindowTitleProperty, value); }
-        }
-        public static readonly DependencyProperty WindowTitleProperty = _dp<string>("WindowTitle", "Player Details");
+        public string WindowTitle { get; set; }
 
         /// <summary> List of zetas this player has unlocked. </summary>
-        public List<Tuple<string,string>> ZetaList
-        {
-            get { return (List<Tuple<string, string>>)GetValue(ZetaListProperty); }
-            set { SetValue(ZetaListProperty, value); }
-        }
-        public static readonly DependencyProperty ZetaListProperty = _dp<List<Tuple<string, string>>>("ZetaList");
+        public List<Tuple<string, string>> ZetaList { get; set; }
 
         /// <summary> List of player statistics. </summary>
-        public List<PlayerStat> StatsList
-        {
-            get { return (List<PlayerStat>)GetValue(StatsListProperty); }
-            set { SetValue(StatsListProperty, value); }
-        }
-        public static readonly DependencyProperty StatsListProperty = _dp<List<PlayerStat>>("StatsList");
-
-
+        public List<PlayerStat> StatsList { get; set; }
 
         #endregion
     }

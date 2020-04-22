@@ -19,28 +19,30 @@ namespace goh_ui.Viewmodels
                 return DependencyProperty.Register(name, typeof(T), typeof(UnitLookupViewmodel));
         }
 
-        public UnitLookupViewmodel()
+        public UnitLookupViewmodel(PlayerList members)
         {
+            Members = members ?? throw new ArgumentNullException("members");
+            RebuildUnitList();
         }
 
-
-        #region XAML bind-able properties
 
         /// <summary> Data for each guild member. </summary>
-        public PlayerList Members
+        public PlayerList Members { get; private set; }
+
+        /// <summary> List of all known units. </summary>
+        public List<string> Units { get; private set; }
+
+        /// <summary> Rebuild unit list when roster changes. </summary>
+        private void RebuildUnitList()
         {
-            get { return (PlayerList)GetValue(MembersProperty); }
-            set { SetValue(MembersProperty, value); }
-        }
-        public static readonly DependencyProperty MembersProperty =
-            DependencyProperty.Register("Members", typeof(PlayerList), typeof(UnitLookupViewmodel), new PropertyMetadata(null, PlayerListChanged));
-        public static void PlayerListChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var vm = d as UnitLookupViewmodel;
-            var pl = e.NewValue as PlayerList;
-            // Rebuild unit list when roster changes
+            if (Members == null)
+            {
+                Units = null;
+                return;
+            }
+
             var dict = new List<string>();
-            foreach (var member in pl)
+            foreach (var member in Members)
             {
                 foreach (var unit in member.Roster.Where(c => c.combatType == Character.COMBATTYPE_CHARACTER && !dict.Contains(c.name)))
                 {
@@ -48,16 +50,11 @@ namespace goh_ui.Viewmodels
                 }
             }
             dict.Sort();
-            vm.Units = dict;
+            Units = dict;
         }
 
-        /// <summary> List of all known units. </summary>
-        public List<string> Units
-        {
-            get { return (List<string>)GetValue(UnitsProperty); }
-            set { SetValue(UnitsProperty, value); }
-        }
-        public static readonly DependencyProperty UnitsProperty = _dp<List<string>>("Units");
+
+        #region Dependency properties
 
         /// <summary> Currently-selected unit. </summary>
         public string SelectedUnit

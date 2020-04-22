@@ -4,7 +4,6 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -51,7 +50,7 @@ namespace goh_ui
         public void Execute(object parameter) => action?.Invoke(parameter);
     }
 
-    public class MainWindowViewmodel : DependencyObject, INotifyPropertyChanged
+    public class MainWindowViewmodel : DependencyObject
     {
         /// <summary> Helper function to simplify generation of dependency properties. </summary>
         /// <typeparam name="T">Datatype of property</typeparam>
@@ -65,18 +64,8 @@ namespace goh_ui
                 return DependencyProperty.Register(name, typeof(T), typeof(MainWindowViewmodel));
         }
 
-        #region INotifyPropertyChanged methods
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        
-        /// <summary> Notify listeners that a dependency property has changed. </summary>
-        /// <param name="propname">Name of the property that changed.</param>
-        private void OnPropertyChanged(string propname) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propname));
-
-        #endregion
-
-        #region XAML bind-able properties
-
+        #region Dependency properties
 
         /// <summary> Description of whatever the program is currently doing in the background. </summary>
         public string CurrentActivity
@@ -142,11 +131,12 @@ namespace goh_ui
         }
         public static readonly DependencyProperty PlayerNameProperty = _dp<string>("PlayerName", "");
 
+        #endregion
+
+
         /// <summary> List of guild members. </summary>
         public PlayerList Members { get; set; } = new PlayerList();
-
-
-        #endregion
+        
 
         /// <summary> Event invoked when the viewmodel wants to close the program. </summary>
         public event EventHandler ExitEvent;
@@ -354,7 +344,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new UnitLookupViewmodel() { Members = Members };
+            var vm = new UnitLookupViewmodel(Members);
             var view = new UnitLookupView(vm) { Owner = parent };
             view.ShowDialog();
         }
@@ -369,7 +359,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new SquadFinderViewmodel() { Members = Members };
+            var vm = new SquadFinderViewmodel(Members);
             var view = new SquadFinderView(vm) { Owner = parent };
             view.ShowDialog();
         }
@@ -606,7 +596,7 @@ namespace goh_ui
                 {
                     // Display player info
                     Player p = new Player(pinfo.First());
-                    var vm = new PlayerDetailViewmodel() { Player = p };
+                    var vm = new PlayerDetailViewmodel(p);
                     var win = new PlayerDetailView(vm) { Owner = parent };
                     win.ShowDialog();
 

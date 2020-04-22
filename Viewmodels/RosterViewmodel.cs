@@ -1,56 +1,31 @@
 ﻿using goh_ui.Views;
+using System;
 using System.Windows;
 
 namespace goh_ui.Viewmodels
 {
     public class RosterViewmodel : DependencyObject
     {
-        /// <summary> Helper function to simplify generation of dependency properties. </summary>
-        /// <typeparam name="T">Datatype of property</typeparam>
-        /// <param name="name">Name of property</param>
-        /// <param name="defaultvalue">Default value for property (optional)</param>
-        private static DependencyProperty _dp<T>(string name, object defaultvalue = null)
-        {
-            if (defaultvalue != null)
-                return DependencyProperty.Register(name, typeof(T), typeof(RosterViewmodel), new PropertyMetadata(defaultvalue));
-            else
-                return DependencyProperty.Register(name, typeof(T), typeof(RosterViewmodel));
-        }
 
         public RosterViewmodel(GuildInfo guild, PlayerList members)
         {
-            Guild = guild;
-            Members = members;
+            Guild = guild ?? throw new ArgumentNullException("guild");
+            Members = members ?? throw new ArgumentNullException("members");
 
             GuildName = Guild.name;
         }
 
 
-        #region XAML bind-able members
+        #region Public members
 
         /// <summary> Name of the current guild. </summary>
-        public string GuildName
-        {
-            get { return (string)GetValue(GuildNameProperty); }
-            private set { SetValue(GuildNameProperty, value); }
-        }
-        public static readonly DependencyProperty GuildNameProperty = _dp<string>("GuildName");
+        public string GuildName { get; private set; }
 
         /// <summary> Data for each guild member. </summary>
-        public PlayerList Members
-        {
-            get { return (PlayerList)GetValue(MembersProperty); }
-            private set { SetValue(MembersProperty, value); }
-        }
-        public static readonly DependencyProperty MembersProperty = _dp<PlayerList>("Members");
+        public PlayerList Members { get; private set; }
 
         /// <summary> Guild metadata. </summary>
-        public GuildInfo Guild
-        {
-            get { return (GuildInfo)GetValue(GuildProperty); }
-            private set { SetValue(GuildProperty, value); }
-        }
-        public static readonly DependencyProperty GuildProperty = _dp<GuildInfo>("Guild");
+        public GuildInfo Guild { get; private set; }
 
         #endregion
 
@@ -63,7 +38,7 @@ namespace goh_ui.Viewmodels
             if (p != null)
             {
                 // Generate player details view
-                var vm = new PlayerDetailViewmodel() { Player = p };
+                var vm = new PlayerDetailViewmodel(p);
                 var win = new PlayerDetailView(vm) { Owner = owner };
                 win.ShowDialog();
             }

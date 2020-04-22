@@ -22,30 +22,35 @@ namespace goh_ui.Viewmodels
         }
 
 
-        public SquadFinderViewmodel()
+        public SquadFinderViewmodel(PlayerList members)
         {
+            Members = members ?? throw new ArgumentNullException("members");
+
             SearchCommand = new SimpleCommand(DoSearch);
+
+            PlayerListUpdated();
 
             TryLoadPresets();
         }
 
-        #region XAML bind-able properties
 
         /// <summary> Data for each guild member. </summary>
-        public PlayerList Members
+        public PlayerList Members { get; private set; }
+
+        /// <summary> List of all known units. </summary>
+        public List<string> Units { get; private set; }
+
+        /// <summary> Rebuild unit list after a roster change. </summary>
+        public void PlayerListUpdated()
         {
-            get { return (PlayerList)GetValue(MembersProperty); }
-            set { SetValue(MembersProperty, value); }
-        }
-        public static readonly DependencyProperty MembersProperty =
-            DependencyProperty.Register("Members", typeof(PlayerList), typeof(SquadFinderViewmodel), new PropertyMetadata(null, PlayerListChanged));
-        public static void PlayerListChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var vm = d as SquadFinderViewmodel;
-            var pl = e.NewValue as PlayerList;
-            // Rebuild unit list when roster changes
+            if (Members == null)
+            {
+                Units = null;
+                return;
+            }
+
             var dict = new List<string>();
-            foreach (var member in pl)
+            foreach (var member in Members)
             {
                 foreach (var unit in member.Roster.Where(c => c.combatType == Character.COMBATTYPE_CHARACTER && !dict.Contains(c.name)))
                 {
@@ -53,16 +58,11 @@ namespace goh_ui.Viewmodels
                 }
             }
             dict.Sort();
-            vm.Units = dict;
+            Units = dict;
         }
 
-        /// <summary> List of all known units. </summary>
-        public List<string> Units
-        {
-            get { return (List<string>)GetValue(UnitsProperty); }
-            set { SetValue(UnitsProperty, value); }
-        }
-        public static readonly DependencyProperty UnitsProperty = _dp<List<string>>("Units");
+
+        #region Dependency properties
 
         /// <summary> Currently-selected unit (slot #1). </summary>
         public string SelectedUnit1
@@ -119,7 +119,6 @@ namespace goh_ui.Viewmodels
             set { SetValue(ResultCountProperty, value); }
         }
         public static readonly DependencyProperty ResultCountProperty = _dp<int>("ResultCount");
-
 
         #endregion
 
@@ -303,7 +302,9 @@ namespace goh_ui.Viewmodels
         }
     }
 
-    /// <summary> Pre-defined squad setup. </summary>
+    /// <summary>
+    /// Pre-defined squad setup.
+    /// </summary>
     public class SquadPreset
     {
         public string Name { get; set; }
