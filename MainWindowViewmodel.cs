@@ -400,6 +400,7 @@ namespace goh_ui
 
                 // Try to log in
                 CurrentActivity = "Logging in";
+                DebugMessage($"Log In: Start");
                 var result = false;
                 try
                 {
@@ -409,6 +410,7 @@ namespace goh_ui
                 {
                     ShowError($"Error:\n{e.Message}");
                 }
+                DebugMessage($"Log In: End");
 
                 LoggedIn = result;
                 if (!LoggedIn)
@@ -429,6 +431,7 @@ namespace goh_ui
             bool success = false;
 
             // Fetch guild information
+            DebugMessage($"Guild Info: Start");
             try
             {
                 resp = await api.GetGuildInfo(api.AllyCode);
@@ -438,6 +441,7 @@ namespace goh_ui
             {
                 ShowError($"Error fetching guild info:\n{e.Message}");
             }
+            DebugMessage($"Guild Info: End");
 
             // Update UI and VM with results
             if (!success)
@@ -463,6 +467,7 @@ namespace goh_ui
 
                 // Fetch player info
                 CurrentActivity = "Fetching member details";
+                DebugMessage($"Player Info: Start");
                 var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
                 List<PlayerInfo> pinfo = null;
                 success = false;
@@ -479,6 +484,7 @@ namespace goh_ui
                 {
                     ShowError($"Error fetching members:\n{e.Message}");
                 }
+                DebugMessage($"Player Info: End");
 
                 // Update UI and VM with results
                 Members.Clear();
@@ -496,6 +502,7 @@ namespace goh_ui
                 var title_task = api.GetTitleInfo();
                 var tt = title_task.ContinueWith((task) =>
                 {
+                    DebugMessage($"Title Data: End");
                     if (task.IsFaulted)
                     {
                         task.Exception.Handle(e =>
@@ -517,6 +524,7 @@ namespace goh_ui
                 var relic_task = api.GetRelicMetadata();
                 var rt = relic_task.ContinueWith((task) =>
                 {
+                    DebugMessage($"Relic Data: End");
                     if (task.IsFaulted)
                     {
                         task.Exception.Handle(e =>
@@ -551,6 +559,7 @@ namespace goh_ui
 
                 // Run both tasks in parallel and wait for them to complete
                 CurrentActivity = "Fetching game data";
+                DebugMessage($"Game Data: Start");
                 await Task.WhenAll(new Task[]{ title_task, relic_task });
 
 
@@ -570,6 +579,7 @@ namespace goh_ui
                 }
 
                 CurrentActivity = "Ready";
+                DebugMessage("Ready");
             }
             else
             {
@@ -607,6 +617,16 @@ namespace goh_ui
 
         }
 
+
+        /// <summary> Print a message to the debugger console (debug builds only). </summary>
+        /// <param name="message">Message to print.</param>
+        private void DebugMessage(string message)
+        {
+#if DEBUG
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            System.Diagnostics.Debug.WriteLine($"{timestamp}: {message}");
+#endif
+        }
     }
 
 

@@ -148,6 +148,7 @@ namespace goh_ui
             string resp = await result.Content.ReadAsStringAsync();
             var r = JsonConvert.DeserializeObject<LoginResponse>(resp);
             token = new AccessToken(r.access_token, r.expires_in);
+            DebugMessage("Logged in with access token: " + r.access_token);
             
             return true;
         }
@@ -310,6 +311,17 @@ namespace goh_ui
         }
 
         #endregion
+
+
+        /// <summary> Print a message to the debugger console (debug builds only). </summary>
+        /// <param name="message">Message to print.</param>
+        private void DebugMessage(string message)
+        {
+#if DEBUG
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            System.Diagnostics.Debug.WriteLine($"{timestamp}: {message}");
+#endif
+        }
     }
 
     /// <summary>
