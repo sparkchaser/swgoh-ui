@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using goh_ui.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;

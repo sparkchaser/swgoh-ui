@@ -1,4 +1,5 @@
-﻿using goh_ui.Viewmodels;
+﻿using goh_ui.Models;
+using goh_ui.Viewmodels;
 using System;
 using System.Windows;
 using System.Windows.Controls;

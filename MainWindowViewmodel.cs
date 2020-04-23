@@ -9,6 +9,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
+using goh_ui.Models;
 
 namespace goh_ui
 {

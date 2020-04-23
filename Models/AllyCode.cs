@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace goh_ui
+namespace goh_ui.Models
 {
     /// <summary>
     /// In-game ally code.

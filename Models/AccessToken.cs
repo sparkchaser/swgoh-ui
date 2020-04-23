@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace goh_ui
+namespace goh_ui.Models
 {
     /// <summary>
     /// Helper class for managing swgoh.help's web API's access tokens.

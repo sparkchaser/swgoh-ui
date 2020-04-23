@@ -1,4 +1,5 @@
-﻿using goh_ui.Views;
+﻿using goh_ui.Models;
+using goh_ui.Views;
 using System;
 using System.Windows;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
-namespace goh_ui
+namespace goh_ui.Models
 {
     /// <summary>
     /// Player details (UI-friendly version).
