@@ -23,6 +23,19 @@ namespace goh_ui.Viewmodels
         {
             Members = members ?? throw new ArgumentNullException("members");
             UnitDetails = unitDetails;
+
+            if (UnitDetails != null && UnitDetails.Count > 0)
+            {
+                FilterVisible = true;
+                Filters = new List<string> { "All" };
+                Filters.AddRange(unitDetails.Select(u => u.categoryIdList).SelectMany(x => x).Distinct().OrderBy(x => x));
+                SelectedFilter = Filters.First();
+            }
+            else
+            {
+                FilterVisible = false;
+            }
+
             RebuildUnitList();
         }
 
@@ -30,37 +43,46 @@ namespace goh_ui.Viewmodels
         /// <summary> Data for each guild member. </summary>
         public PlayerList Members { get; private set; }
 
-        /// <summary> List of all known units. </summary>
-        public List<string> Units { get; private set; }
-
         /// <summary> List of detailed metadata for all defined units. </summary>
         public List<UnitDetails> UnitDetails { get; private set; }
+
+        /// <summary> List of all supported unit filters. </summary>
+        public List<string> Filters { get; private set; }
 
         /// <summary> Rebuild unit list when roster changes. </summary>
         private void RebuildUnitList()
         {
             if (Members == null)
             {
-                Units = null;
+                FilteredUnits = null;
                 return;
             }
 
             // Use UnitDetails if available, since it can contain units not found
             // in any player's roster.
+            var list = new List<string>();
             if (UnitDetails != null && UnitDetails.Count > 0)
             {
-                Units = UnitDetails.Select(u => u.name).ToList();
-                Units.Sort();
-                return;
+                if (SelectedFilter == "All")
+                    list = UnitDetails.Select(u => u.name).ToList();
+                else
+                {
+                    list = UnitDetails.Where(u => u.categoryIdList.Contains(SelectedFilter))
+                                      .Select(u => u.name)
+                                      .ToList();
+                }
             }
-
-            // If UnitDetails not available, derive a list by combining the members' rosters.
-            Units = Members.Select(m => m.Roster.Select(c => c.name).ToArray()) // map each member to an array of unit names
-                           .ToArray()
-                           .SelectMany(x => x) // flatten list
-                           .Distinct()         // de-duplicate
-                           .ToList();
-            Units.Sort();
+            else
+            {
+                // If UnitDetails not available, derive a list by combining the members' rosters.
+                list = Members.Select(m => m.Roster.Select(c => c.name).ToArray()) // map each member to an array of unit names
+                              .ToArray()
+                              .SelectMany(x => x) // flatten list
+                              .Distinct()         // de-duplicate
+                              .ToList();
+            }
+            list.Sort();
+            FilteredUnits = list;
         }
 
 
@@ -109,6 +131,33 @@ namespace goh_ui.Viewmodels
             set { SetValue(ResultCountProperty, value); }
         }
         public static readonly DependencyProperty ResultCountProperty = _dp<int>("ResultCount");
+
+        /// <summary> Whether or not the unit filter should be visible. </summary>
+        public bool FilterVisible
+        {
+            get { return (bool)GetValue(FilterVisibleProperty); }
+            set { SetValue(FilterVisibleProperty, value); }
+        }
+        public static readonly DependencyProperty FilterVisibleProperty = _dp<bool>("FilterVisible");
+
+        /// <summary> List of units, filtered based on current selection. </summary>
+        public List<string> FilteredUnits
+        {
+            get { return (List<string>)GetValue(FilteredUnitsProperty); }
+            set { SetValue(FilteredUnitsProperty, value); }
+        }
+        public static readonly DependencyProperty FilteredUnitsProperty = _dp<List<string>>("FilteredUnits");
+
+        /// <summary> Currently-selected unit filter. </summary>
+        public string SelectedFilter
+        {
+            get { return (string)GetValue(SelectedFilterProperty); }
+            set { SetValue(SelectedFilterProperty, value); }
+        }
+        public static readonly DependencyProperty SelectedFilterProperty =
+            DependencyProperty.Register("SelectedFilter", typeof(string), typeof(UnitLookupViewmodel),
+                                        new PropertyMetadata(null, SelectedFilterChanged));
+        public static void SelectedFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => (d as UnitLookupViewmodel).RebuildUnitList();
 
         #endregion
     }

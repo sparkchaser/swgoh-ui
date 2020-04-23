@@ -12,6 +12,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <local:FormattedNumberConverter x:Key="Fmt"/>
+            <BooleanToVisibilityConverter x:Key="BoolVis"/>
         </ResourceDictionary>
     </Window.Resources>
     
@@ -21,15 +22,40 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        
+
         <!-- Unit selection -->
-        <StackPanel Orientation="Horizontal" Grid.Row="0">
-            <Label Content="Select Unit"/>
-            <ComboBox ItemsSource="{Binding Path=Units}"
-                      SelectedItem="{Binding Path=SelectedUnit}"
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Content="Filter"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Visibility="{Binding Path=FilterVisible,Converter={StaticResource BoolVis}}"/>
+            <ComboBox ItemsSource="{Binding Path=Filters}"
+                      SelectedItem="{Binding Path=SelectedFilter}"
+                      Grid.Row="0"
+                      Grid.Column="1"
+                      Visibility="{Binding Path=FilterVisible,Converter={StaticResource BoolVis}}"
+                      Margin="3"
                       Width="220"/>
-        </StackPanel>
+            
+            <Label Content="Select Unit" Grid.Row="1" Grid.Column="0"/>
+            <ComboBox ItemsSource="{Binding Path=FilteredUnits}"
+                      SelectedItem="{Binding Path=SelectedUnit}"
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      Margin="3"
+                      Width="220"/>
         
+        </Grid>
+
         <!-- Results count -->
         <StackPanel Orientation="Horizontal" Grid.Row="1">
             <StackPanel.Style>

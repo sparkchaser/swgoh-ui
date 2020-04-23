@@ -296,7 +296,17 @@ namespace goh_ui
             }
 
             // Delete several units that aren't actually obtainable
-            units = units.Where(u => !u.baseId.EndsWith("_DUEL") && !u.baseId.EndsWith("_GLEVENT") && u.baseId != "AWAKENEDREY").ToArray();
+            // TODO: Find a better way to filter these automatically
+            units = units.Where(u => {
+                var suffixes = new string[] { "_DUEL", "_GLEVENT", "_EVENT", "_MARQUEE" };
+                var badnames = new string[] { "AWAKENEDREY", "AMILYNHOLDO_RADDUS", "FOTF_VADER", "VULTUREDROID_tb" };
+                foreach (var x in suffixes)
+                {
+                    if (u.baseId.EndsWith(x))
+                        return false;
+                }
+                return !badnames.Contains(u.baseId);
+            }).ToArray();
 
             // Now fetch the 'categoryList' table
             resp = null;
