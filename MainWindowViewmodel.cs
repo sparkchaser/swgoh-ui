@@ -441,7 +441,7 @@ namespace goh_ui
             DebugMessage($"Guild Info: End");
 
             // Update UI and VM with results
-            if (!success)
+            if (!success || resp == null)
             {
                 guild = null;
                 Members.Clear();
@@ -486,7 +486,7 @@ namespace goh_ui
                 // Update UI and VM with results
                 Members.Clear();
                 rawPlayerInfo = null;
-                if (!success)
+                if (!success || pinfo == null)
                 {
                     CurrentActivity = "No data available";
                     return;
@@ -597,10 +597,13 @@ namespace goh_ui
                     Player p = new Player(player);
 
                     // Decode title
-                    string selected_title = player.titles.selected;
-                    if (!string.IsNullOrWhiteSpace(selected_title) && _titles.Any(t => t.id == selected_title))
+                    if (_titles != null)
                     {
-                        p.CurrentTitle = _titles.First(t => t.id == selected_title).name;
+                        string selected_title = player.titles.selected;
+                        if (!string.IsNullOrWhiteSpace(selected_title) && _titles.Any(t => t.id == selected_title))
+                        {
+                            p.CurrentTitle = _titles.First(t => t.id == selected_title).name;
+                        }
                     }
 
                     Members.Add(p);
