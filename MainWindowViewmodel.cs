@@ -431,31 +431,37 @@ namespace goh_ui
             GuildInfo resp = null;
             bool success = false;
 
-            // Fetch guild information
-            DebugMessage($"Guild Info: Start");
-            try
+            // Reuse existing information if it's relatively recent.
+            // The server doesn't refresh too often, so don't set time window too small.
+            if (guild == null || guild.Updated < DateTimeOffset.Now.AddHours(-8))
             {
-                resp = await api.GetGuildInfo(api.AllyCode);
-                success = true;
-            }
-            catch (Exception e)
-            {
-                ShowError($"Error fetching guild info:\n{e.Message}");
-            }
-            DebugMessage($"Guild Info: End");
+                // Fetch guild information
+                DebugMessage($"Guild Info: Start");
+                try
+                {
+                    resp = await api.GetGuildInfo(api.AllyCode);
+                    success = true;
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error fetching guild info:\n{e.Message}");
+                }
+                DebugMessage($"Guild Info: End");
 
-            // Update UI and VM with results
-            if (!success || resp == null)
-            {
-                guild = null;
-                Members.Clear();
-                rawPlayerInfo = null;
-                PlayerName = "";
-                GuildName = "";
-                CurrentActivity = "No data available";
-                return;
+                // Update UI and VM with results
+                if (!success || resp == null)
+                {
+                    guild = null;
+                    Members.Clear();
+                    rawPlayerInfo = null;
+                    PlayerName = "";
+                    GuildName = "";
+                    CurrentActivity = "No data available";
+                    return;
+                }
+                guild = resp;
             }
-            guild = resp;
+
             // NOTE: It would be better to pull the player's info first and check if they were in a guild.
             //       The API is so slow, though, that it saves a noticible amount of time to blindly pull
             //       guild info first and try to catch the error.  If this becomes unmanageably awkward,
@@ -466,141 +472,152 @@ namespace goh_ui
                 PlayerName = guild.roster.Where(p => p.allyCode == api.AllyCode.Value).FirstOrDefault().name;
                 GuildName = guild.name;
 
-                // Fetch player info
-                CurrentActivity = "Fetching member details";
-                DebugMessage($"Player Info: Start");
-                var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
-
-                ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
-
-                // Fetch no more than 5 players' worth of data at a time to help avoid timeouts (can take 4-6 sec per player)
-                // Also, limit number of simultaneous requests to 3 to avoid overloading the server.
-                var chunks = codes.Select((item, idx) => new { item, idx }).GroupBy(x => x.idx / 5).Select(x => x.Select(y => y.item));
-                var throttle = new SemaphoreSlim(3, 3);
-                var tasks = chunks.Select(async chunk =>
+                if (rawPlayerInfo == null || rawPlayerInfo.First().Updated < DateTimeOffset.Now.AddHours(-8) || rawPlayerInfo.Count != guild.members)
                 {
-                    await throttle.WaitAsync();
-                    try
+                    // Fetch player info
+                    CurrentActivity = "Fetching member details";
+                    DebugMessage($"Player Info: Start");
+                    var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
+
+                    ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
+
+                    // Fetch no more than 5 players' worth of data at a time to help avoid timeouts (can take 4-6 sec per player)
+                    // Also, limit number of simultaneous requests to 3 to avoid overloading the server.
+                    var chunks = codes.Select((item, idx) => new { item, idx }).GroupBy(x => x.idx / 5).Select(x => x.Select(y => y.item));
+                    var throttle = new SemaphoreSlim(3, 3);
+                    var tasks = chunks.Select(async chunk =>
                     {
-                        DebugMessage($"Fetching new group of players [{chunk.First()}]");
-                        List<PlayerInfo> these_players;
+                        await throttle.WaitAsync();
                         try
                         {
-                            these_players = await api.GetPlayerInfo(chunk);
-                        }
-                        catch (Newtonsoft.Json.JsonReaderException e)
-                        {
-                            ShowError($"Error deserializing JSON:\n{e.Message}");
-                            return;
-                        }
-                        catch (Exception e)
-                        {
-                            ShowError($"Error fetching members:\n{e.Message}");
-                            return;
-                        }
+                            DebugMessage($"Fetching new group of players [{chunk.First()}]");
+                            List<PlayerInfo> these_players;
+                            try
+                            {
+                                these_players = await api.GetPlayerInfo(chunk);
+                            }
+                            catch (Newtonsoft.Json.JsonReaderException e)
+                            {
+                                ShowError($"Error deserializing JSON:\n{e.Message}");
+                                return;
+                            }
+                            catch (Exception e)
+                            {
+                                ShowError($"Error fetching members:\n{e.Message}");
+                                return;
+                            }
 
-                        if (these_players != null)
-                            foreach (var p in these_players)
-                                pinfo.Add(p);
-                        DebugMessage($"Finished group [{chunk.First()}]");
-                    }
-                    finally
+                            if (these_players != null)
+                                foreach (var p in these_players)
+                                    pinfo.Add(p);
+                            DebugMessage($"Finished group [{chunk.First()}]");
+                        }
+                        finally
+                        {
+                            throttle.Release();
+                        }
+                    });
+                    await Task.WhenAll(tasks);
+                    DebugMessage($"Player Info: End");
+
+                    // Update UI and VM with results
+                    Members.Clear();
+                    rawPlayerInfo = null;
+                    if (!success || pinfo == null || pinfo.Count != codes.Count())
                     {
-                        throttle.Release();
+                        CurrentActivity = "No data available";
+                        return;
                     }
-                });
-                await Task.WhenAll(tasks);
-                DebugMessage($"Player Info: End");
 
-                // Update UI and VM with results
-                Members.Clear();
-                rawPlayerInfo = null;
-                if (!success || pinfo == null || pinfo.Count != codes.Count())
-                {
-                    CurrentActivity = "No data available";
-                    return;
+                    rawPlayerInfo = pinfo.ToList();
                 }
 
-                rawPlayerInfo = pinfo.ToList();
-
-                // Build task to fetch title metadata
-                var title_task = api.GetTitleInfo();
-                var tt = title_task.ContinueWith((task) =>
+                if (!gameData.HasData() || gameData.IsOutdated())
                 {
-                    DebugMessage($"Title Data: End");
-                    if (task.IsFaulted)
+                    // Build task to fetch title metadata
+                    var title_task = api.GetTitleInfo();
+                    var tt = title_task.ContinueWith((task) =>
                     {
-                        task.Exception.Handle(e =>
+                        DebugMessage($"Title Data: End");
+                        if (task.IsFaulted)
                         {
-                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                ShowError($"Error deserializing JSON:\n{e.Message}");
-                            else
-                                ShowError($"Error fetching titles:\n{e.Message}");
-                            return true;
-                        });
+                            task.Exception.Handle(e =>
+                            {
+                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                                    ShowError($"Error deserializing JSON:\n{e.Message}");
+                                else
+                                    ShowError($"Error fetching titles:\n{e.Message}");
+                                return true;
+                            });
 
+                            return;
+                        }
+
+                        gameData.Titles = task.Result.ToArray();
+                    });
+
+                    // Build task to fetch relic power metadata
+                    var relic_task = api.GetRelicMetadata();
+                    var rt = relic_task.ContinueWith((task) =>
+                    {
+                        DebugMessage($"Relic Data: End");
+                        if (task.IsFaulted)
+                        {
+                            task.Exception.Handle(e =>
+                            {
+                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                                    ShowError($"Error deserializing JSON:\n{e.Message}");
+                                else
+                                    ShowError($"Error fetching relic metadata:\n{e.Message}");
+                                return true;
+                            });
+
+                            return;
+                        }
+
+                        gameData.RelicMultipliers = task.Result;
+                    });
+
+                    // Build task to fetch detailed character metadata
+                    var units_task = api.GetUnitDetails();
+                    var ut = units_task.ContinueWith((task) =>
+                    {
+                        DebugMessage($"Unit Data: End");
+                        if (task.IsFaulted)
+                        {
+                            task.Exception.Handle(e =>
+                            {
+                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                                    ShowError($"Error deserializing JSON:\n{e.Message}");
+                                else
+                                    ShowError($"Error fetching unit metadata:\n{e.Message}");
+                                return true;
+                            });
+
+                            return;
+                        }
+
+                        gameData.Units = task.Result;
+                    });
+
+                    // Run tasks in parallel and wait for them to complete
+                    CurrentActivity = "Fetching game data";
+                    DebugMessage($"Game Data: Start");
+                    try
+                    {
+                        await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
+                    }
+                    catch (Exception e)
+                    {
+                        ShowError($"Error fetching game data:\n{e.Message}");
+                        CurrentActivity = "No data available";
                         return;
                     }
 
-                    gameData.Titles = task.Result.ToArray();
-                });
-
-                // Build task to fetch relic power metadata
-                var relic_task = api.GetRelicMetadata();
-                var rt = relic_task.ContinueWith((task) =>
-                {
-                    DebugMessage($"Relic Data: End");
-                    if (task.IsFaulted)
+                    if (gameData.HasData())
                     {
-                        task.Exception.Handle(e =>
-                        {
-                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                ShowError($"Error deserializing JSON:\n{e.Message}");
-                            else
-                                ShowError($"Error fetching relic metadata:\n{e.Message}");
-                            return true;
-                        });
-
-                        return;
+                        gameData.Updated = DateTime.Now;
                     }
-
-                    gameData.RelicMultipliers = task.Result;
-                });
-
-                // Build task to fetch detailed character metadata
-                var units_task = api.GetUnitDetails();
-                var ut = units_task.ContinueWith((task) =>
-                {
-                    DebugMessage($"Unit Data: End");
-                    if (task.IsFaulted)
-                    {
-                        task.Exception.Handle(e =>
-                        {
-                            if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                ShowError($"Error deserializing JSON:\n{e.Message}");
-                            else
-                                ShowError($"Error fetching unit metadata:\n{e.Message}");
-                            return true;
-                        });
-
-                        return;
-                    }
-
-                    gameData.Units = task.Result;
-                });
-
-                // Run tasks in parallel and wait for them to complete
-                CurrentActivity = "Fetching game data";
-                DebugMessage($"Game Data: Start");
-                try
-                {
-                    await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
-                }
-                catch (Exception e)
-                {
-                    ShowError($"Error fetching game data:\n{e.Message}");
-                    CurrentActivity = "No data available";
-                    return;
                 }
 
                 if (!gameData.HasData())
