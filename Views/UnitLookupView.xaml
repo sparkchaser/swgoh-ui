@@ -47,7 +47,7 @@
                       Width="220"/>
             
             <Label Content="Select Unit" Grid.Row="1" Grid.Column="0"/>
-            <ComboBox ItemsSource="{Binding Path=FilteredUnits}"
+            <ComboBox ItemsSource="{Binding Path=UnitSource.View}"
                       SelectedItem="{Binding Path=SelectedUnit}"
                       Grid.Row="1"
                       Grid.Column="1"

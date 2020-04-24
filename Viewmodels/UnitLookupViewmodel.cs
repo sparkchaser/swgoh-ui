@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Data;
 
 namespace goh_ui.Viewmodels
 {
@@ -24,21 +26,30 @@ namespace goh_ui.Viewmodels
             Members = members ?? throw new ArgumentNullException("members");
             UnitDetails = unitDetails;
 
+            AllUnits = new ObservableCollection<string>();
+
             if (UnitDetails != null && UnitDetails.Count > 0)
             {
                 FilterVisible = true;
-                Filters = new List<string> { "All" };
-                Filters.AddRange(unitDetails.Select(u => u.categoryIdList).SelectMany(x => x).Distinct().OrderBy(x => x));
-                SelectedFilter = Filters.First();
+                foreach (var unitname in unitDetails.Select(u => u.name).OrderBy(x => x))
+                    AllUnits.Add(unitname);
             }
             else
             {
                 FilterVisible = false;
+                foreach (var unitname in members.Select(p => p.Roster.Select(c => c.name)).SelectMany(x => x).Distinct().OrderBy(x => x))
+                    AllUnits.Add(unitname);
             }
 
-            RebuildUnitList();
+            UnitSource = new CollectionViewSource { Source = AllUnits };
+            UnitSource.Filter += FilterUnits;
+            
+            BuildFilterList();
+            SelectedFilter = Filters.FirstOrDefault();
         }
 
+        /// <summary> Filtered list of units. </summary>
+        public CollectionViewSource UnitSource { get; private set; }
 
         /// <summary> Data for each guild member. </summary>
         public PlayerList Members { get; private set; }
@@ -46,45 +57,11 @@ namespace goh_ui.Viewmodels
         /// <summary> List of detailed metadata for all defined units. </summary>
         public List<UnitDetails> UnitDetails { get; private set; }
 
+        /// <summary> Complete list of all known units. </summary>
+        public ObservableCollection<string> AllUnits { get; private set; }
+
         /// <summary> List of all supported unit filters. </summary>
-        public List<string> Filters { get; private set; }
-
-        /// <summary> Rebuild unit list when roster changes. </summary>
-        private void RebuildUnitList()
-        {
-            if (Members == null)
-            {
-                FilteredUnits = null;
-                return;
-            }
-
-            // Use UnitDetails if available, since it can contain units not found
-            // in any player's roster.
-            var list = new List<string>();
-            if (UnitDetails != null && UnitDetails.Count > 0)
-            {
-                if (SelectedFilter == "All")
-                    list = UnitDetails.Select(u => u.name).ToList();
-                else
-                {
-                    list = UnitDetails.Where(u => u.categoryIdList.Contains(SelectedFilter))
-                                      .Select(u => u.name)
-                                      .ToList();
-                }
-            }
-            else
-            {
-                // If UnitDetails not available, derive a list by combining the members' rosters.
-                list = Members.Select(m => m.Roster.Select(c => c.name).ToArray()) // map each member to an array of unit names
-                              .ToArray()
-                              .SelectMany(x => x) // flatten list
-                              .Distinct()         // de-duplicate
-                              .ToList();
-            }
-            list.Sort();
-            FilteredUnits = list;
-        }
-
+        public List<string> Filters { get; private set; } = new List<string>();
 
         #region Dependency properties
 
@@ -140,14 +117,6 @@ namespace goh_ui.Viewmodels
         }
         public static readonly DependencyProperty FilterVisibleProperty = _dp<bool>("FilterVisible");
 
-        /// <summary> List of units, filtered based on current selection. </summary>
-        public List<string> FilteredUnits
-        {
-            get { return (List<string>)GetValue(FilteredUnitsProperty); }
-            set { SetValue(FilteredUnitsProperty, value); }
-        }
-        public static readonly DependencyProperty FilteredUnitsProperty = _dp<List<string>>("FilteredUnits");
-
         /// <summary> Currently-selected unit filter. </summary>
         public string SelectedFilter
         {
@@ -157,9 +126,65 @@ namespace goh_ui.Viewmodels
         public static readonly DependencyProperty SelectedFilterProperty =
             DependencyProperty.Register("SelectedFilter", typeof(string), typeof(UnitLookupViewmodel),
                                         new PropertyMetadata(null, SelectedFilterChanged));
-        public static void SelectedFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => (d as UnitLookupViewmodel).RebuildUnitList();
-
         #endregion
+
+        /// <summary> Whenever the selected filter changes, signal the view to refresh the list. </summary>
+        private static void SelectedFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            (d as UnitLookupViewmodel).UnitSource.View.Refresh();
+        }
+
+        /// <summary> Rebuild the list of available filters. </summary>
+        private void BuildFilterList()
+        {
+            Filters.Clear();
+
+            if (UnitDetails == null || UnitDetails.Count == 0)
+                return;
+
+            // Add a few generic filters at the top of the list.
+            Filters.Add("All");
+            Filters.Add("Characters");
+            Filters.Add("Ships");
+            Filters.Add("Light Side");
+            Filters.Add("Dark Side");
+
+            // Add filters based on unit tags
+            Filters.AddRange(UnitDetails.Select(u => u.categoryIdList).SelectMany(x => x).Distinct().OrderBy(x => x));
+        }
+
+        /// <summary> Unit filtering logic. </summary>
+        private void FilterUnits(object sender, FilterEventArgs e)
+        {
+            // If filters aren't supported, return everything
+            if (UnitDetails == null || UnitDetails.Count == 0)
+            {
+                e.Accepted = true;
+                return;
+            }
+
+            // Look up character metadata
+            var character = e.Item as string;
+            var unit = UnitDetails.Where(u => u.name == character).FirstOrDefault();
+            if (unit == null)
+            {
+                e.Accepted = false;
+                return;
+            }
+
+            // Apply selected filter
+            switch (SelectedFilter)
+            {
+                // Handle generic filters
+                case "All": e.Accepted = true; break;
+                case "Characters": e.Accepted = unit.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER; break;
+                case "Ships": e.Accepted = unit.combatType == goh_ui.UnitDetails.COMBATTYPE_SHIP; break;
+                case "Light Side": e.Accepted = unit.forceAlignment == goh_ui.UnitDetails.ALIGNMENT_LIGHT; break;
+                case "Dark Side": e.Accepted = unit.forceAlignment == goh_ui.UnitDetails.ALIGNMENT_DARK; break;
+                // Handle tag-based filters
+                default: e.Accepted = unit.categoryIdList.Contains(SelectedFilter); break;
+            }
+        }
     }
     
     /// <summary>
