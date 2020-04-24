@@ -2,6 +2,7 @@
 using goh_ui.Viewmodels;
 using Microsoft.Win32;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -10,6 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using goh_ui.Models;
+using System.Threading;
 
 namespace goh_ui
 {
@@ -468,33 +470,58 @@ namespace goh_ui
                 CurrentActivity = "Fetching member details";
                 DebugMessage($"Player Info: Start");
                 var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
-                List<PlayerInfo> pinfo = null;
-                success = false;
-                try
+
+                ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
+
+                // Fetch no more than 5 players' worth of data at a time to help avoid timeouts (can take 4-6 sec per player)
+                // Also, limit number of simultaneous requests to 3 to avoid overloading the server.
+                var chunks = codes.Select((item, idx) => new { item, idx }).GroupBy(x => x.idx / 5).Select(x => x.Select(y => y.item));
+                var throttle = new SemaphoreSlim(3, 3);
+                var tasks = chunks.Select(async chunk =>
                 {
-                    pinfo = await api.GetPlayerInfo(codes);
-                    success = true;
-                }
-                catch (Newtonsoft.Json.JsonReaderException e)
-                {
-                    ShowError($"Error deserializing JSON:\n{e.Message}");
-                }
-                catch (Exception e)
-                {
-                    ShowError($"Error fetching members:\n{e.Message}");
-                }
+                    await throttle.WaitAsync();
+                    try
+                    {
+                        DebugMessage($"Fetching new group of players [{chunk.First()}]");
+                        List<PlayerInfo> these_players;
+                        try
+                        {
+                            these_players = await api.GetPlayerInfo(chunk);
+                        }
+                        catch (Newtonsoft.Json.JsonReaderException e)
+                        {
+                            ShowError($"Error deserializing JSON:\n{e.Message}");
+                            return;
+                        }
+                        catch (Exception e)
+                        {
+                            ShowError($"Error fetching members:\n{e.Message}");
+                            return;
+                        }
+
+                        if (these_players != null)
+                            foreach (var p in these_players)
+                                pinfo.Add(p);
+                        DebugMessage($"Finished group [{chunk.First()}]");
+                    }
+                    finally
+                    {
+                        throttle.Release();
+                    }
+                });
+                await Task.WhenAll(tasks);
                 DebugMessage($"Player Info: End");
 
                 // Update UI and VM with results
                 Members.Clear();
                 rawPlayerInfo = null;
-                if (!success || pinfo == null)
+                if (!success || pinfo == null || pinfo.Count != codes.Count())
                 {
                     CurrentActivity = "No data available";
                     return;
                 }
 
-                rawPlayerInfo = pinfo;
+                rawPlayerInfo = pinfo.ToList();
 
                 // Build task to fetch title metadata
                 var title_task = api.GetTitleInfo();
