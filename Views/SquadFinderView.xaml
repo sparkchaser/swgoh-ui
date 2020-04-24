@@ -46,6 +46,15 @@
         <StackPanel Grid.Row="1" Orientation="Vertical">
             <Label Content="Select Squad"/>
             <Grid Grid.IsSharedSizeScope="True">
+                <Grid.Resources>
+                    <Style TargetType="{x:Type ComboBox}">
+                        <Setter Property="Width" Value="220"/>
+                        <Setter Property="Margin" Value="3"/>
+                    </Style>
+                    <Style TargetType="{x:Type Label}">
+                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                    </Style>
+                </Grid.Resources>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="B"/>
@@ -57,36 +66,37 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Label Content="Leader" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right"/>
-                <Label Content="Unit 2" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Right"/>
-                <Label Content="Unit 3" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right"/>
-                <Label Content="Unit 4" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right"/>
-                <Label Content="Unit 5" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Right"/>
+                <Label Content="Filter" Grid.Row="0" Grid.Column="0" Visibility="{Binding Path=ShowFilter,Converter={StaticResource BoolVis}}"/>
+                <Label Content="Leader" Grid.Row="1" Grid.Column="0"/>
+                <Label Content="Unit 2" Grid.Row="1" Grid.Column="2"/>
+                <Label Content="Unit 3" Grid.Row="2" Grid.Column="0"/>
+                <Label Content="Unit 4" Grid.Row="2" Grid.Column="2"/>
+                <Label Content="Unit 5" Grid.Row="3" Grid.Column="0"/>
 
                 <ComboBox Grid.Row="0" Grid.Column="1"
-                          ItemsSource="{Binding Path=Units}"
-                          SelectedItem="{Binding Path=SelectedUnit1}"
-                          Width="220"/>
-                <ComboBox Grid.Row="0" Grid.Column="3"
-                          ItemsSource="{Binding Path=Units}"
-                          SelectedItem="{Binding Path=SelectedUnit2}"
-                          Width="220"/>
+                          ItemsSource="{Binding Path=Filters}"
+                          SelectedItem="{Binding Path=SelectedFilter}"
+                          Visibility="{Binding Path=ShowFilter,Converter={StaticResource BoolVis}}"/>
                 <ComboBox Grid.Row="1" Grid.Column="1"
-                          ItemsSource="{Binding Path=Units}"
-                          SelectedItem="{Binding Path=SelectedUnit3}"
-                          Width="220"/>
+                          ItemsSource="{Binding Path=UnitSource1.View}"
+                          SelectedItem="{Binding Path=SelectedUnit1}"/>
                 <ComboBox Grid.Row="1" Grid.Column="3"
-                          ItemsSource="{Binding Path=Units}"
-                          SelectedItem="{Binding Path=SelectedUnit4}"
-                          Width="220"/>
+                          ItemsSource="{Binding Path=UnitSource2.View}"
+                          SelectedItem="{Binding Path=SelectedUnit2}"/>
                 <ComboBox Grid.Row="2" Grid.Column="1"
-                          ItemsSource="{Binding Path=Units}"
-                          SelectedItem="{Binding Path=SelectedUnit5}"
-                          Width="220"/>
+                          ItemsSource="{Binding Path=UnitSource3.View}"
+                          SelectedItem="{Binding Path=SelectedUnit3}"/>
+                <ComboBox Grid.Row="2" Grid.Column="3"
+                          ItemsSource="{Binding Path=UnitSource4.View}"
+                          SelectedItem="{Binding Path=SelectedUnit4}"/>
+                <ComboBox Grid.Row="3" Grid.Column="1"
+                          ItemsSource="{Binding Path=UnitSource5.View}"
+                          SelectedItem="{Binding Path=SelectedUnit5}"/>
 
-                <Button Grid.Row="2"
+                <Button Grid.Row="3"
                         Grid.Column="3"
                         Content="Search"
                         Command="{Binding Path=SearchCommand}"

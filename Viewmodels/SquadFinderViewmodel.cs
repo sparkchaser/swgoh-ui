@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Data;
 
 namespace goh_ui.Viewmodels
 {
@@ -22,30 +24,59 @@ namespace goh_ui.Viewmodels
         }
 
 
+        /// <summary> List of detailed metadata for all defined units. </summary>
+        private List<UnitDetails> UnitDetails { get; set; }
+
+        /// <summary> Data for each guild member. </summary>
+        private PlayerList Members { get; set; }
+
+
         public SquadFinderViewmodel(PlayerList members, List<UnitDetails> unitDetails)
         {
             Members = members ?? throw new ArgumentNullException("members");
             UnitDetails = unitDetails;
 
+            ShowFilter = UnitDetails != null;
+
             SearchCommand = new SimpleCommand(DoSearch);
 
-            PlayerListUpdated();
+            BuildUnitList();
+            UnitSource1 = new CollectionViewSource { Source = Units };
+            UnitSource1.Filter += FilterUnits;
+            UnitSource2 = new CollectionViewSource { Source = Units };
+            UnitSource2.Filter += FilterUnits;
+            UnitSource3 = new CollectionViewSource { Source = Units };
+            UnitSource3.Filter += FilterUnits;
+            UnitSource4 = new CollectionViewSource { Source = Units };
+            UnitSource4.Filter += FilterUnits;
+            UnitSource5 = new CollectionViewSource { Source = Units };
+            UnitSource5.Filter += FilterUnits;
+
+            BuildFilterList();
+            SelectedFilter = Filters.FirstOrDefault();
 
             TryLoadPresets();
         }
 
-
-        /// <summary> Data for each guild member. </summary>
-        public PlayerList Members { get; private set; }
+        // Filtered lists of units
+        public CollectionViewSource UnitSource1 { get; private set; }
+        public CollectionViewSource UnitSource2 { get; private set; }
+        public CollectionViewSource UnitSource3 { get; private set; }
+        public CollectionViewSource UnitSource4 { get; private set; }
+        public CollectionViewSource UnitSource5 { get; private set; }
 
         /// <summary> List of all known units. </summary>
-        public List<string> Units { get; private set; }
+        public ObservableCollection<string> Units { get; private set; }
 
-        /// <summary> List of detailed metadata for all defined units. </summary>
-        public List<UnitDetails> UnitDetails { get; private set; }
+        /// <summary> List of all supported unit filters. </summary>
+        public List<string> Filters { get; private set; } = new List<string>();
 
-        /// <summary> Rebuild unit list after a roster change. </summary>
-        public void PlayerListUpdated()
+        /// <summary> Whether or not the filter dropdown should be displayed. </summary>
+        public bool ShowFilter { get; private set; }
+
+
+        /// <summary> Rebuild unit list. </summary>
+        public void BuildUnitList()
         {
             if (Members == null)
             {
@@ -53,22 +84,25 @@ namespace goh_ui.Viewmodels
                 return;
             }
 
+            Units = new ObservableCollection<string>();
+
             // Use UnitDetails if available, since it can contain units not found
             // in any player's roster.
             if (UnitDetails != null && UnitDetails.Count > 0)
             {
-                Units = UnitDetails.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER).Select(u => u.name).ToList();
-                Units.Sort();
+                foreach (var name in UnitDetails.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER).Select(u => u.name).OrderBy(x => x))
+                    Units.Add(name);
                 return;
             }
 
             // If UnitDetails not available, derive a list by combining the members' rosters.
-            Units = Members.Select(m => m.Roster.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER)
-                                                .Select(c => c.name)) // map each member to an array of unit names
-                           .SelectMany(x => x) // flatten list
-                           .Distinct()         // de-duplicate
-                           .ToList();
-            Units.Sort();
+            var units = Members.Select(m => m.Roster.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER)
+                               .Select(c => c.name)) // map each member to an array of unit names
+                               .SelectMany(x => x)   // flatten list
+                               .Distinct()           // de-duplicate
+                               .OrderBy(x => x);     // sort alphabetically
+            foreach (var unit in units)
+                Units.Add(unit);
         }
 
 
@@ -130,8 +164,82 @@ namespace goh_ui.Viewmodels
         }
         public static readonly DependencyProperty ResultCountProperty = _dp<int>("ResultCount");
 
+        /// <summary> Currently-selected unit filter. </summary>
+        public string SelectedFilter
+        {
+            get { return (string)GetValue(SelectedFilterProperty); }
+            set { SetValue(SelectedFilterProperty, value); }
+        }
+        public static readonly DependencyProperty SelectedFilterProperty =
+            DependencyProperty.Register("SelectedFilter", typeof(string), typeof(SquadFinderViewmodel),
+                                        new PropertyMetadata(null, SelectedFilterChanged));
+
         #endregion
 
+        #region Unit list filtering
+
+        /// <summary> Whenever the selected filter changes, signal the view to refresh the list. </summary>
+        private static void SelectedFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var vm = d as SquadFinderViewmodel;
+            vm.UnitSource1.View.Refresh();
+            vm.UnitSource2.View.Refresh();
+            vm.UnitSource3.View.Refresh();
+            vm.UnitSource4.View.Refresh();
+            vm.UnitSource5.View.Refresh();
+        }
+
+        /// <summary> Rebuild the list of available filters. </summary>
+        private void BuildFilterList()
+        {
+            Filters.Clear();
+
+            if (UnitDetails == null || UnitDetails.Count == 0)
+                return;
+
+            // Add a few generic filters at the top of the list.
+            Filters.Add("All");
+            Filters.Add("Light Side");
+            Filters.Add("Dark Side");
+
+            // Add filters based on unit tags
+            Filters.AddRange(UnitDetails.Select(u => u.categoryIdList).SelectMany(x => x).Distinct().OrderBy(x => x));
+        }
+
+        /// <summary> Unit filtering logic. </summary>
+        private void FilterUnits(object sender, FilterEventArgs e)
+        {
+            // If filters aren't supported, return everything
+            if (UnitDetails == null || UnitDetails.Count == 0)
+            {
+                e.Accepted = true;
+                return;
+            }
+
+            // Look up character metadata
+            var character = e.Item as string;
+            var unit = UnitDetails.Where(u => u.name == character).FirstOrDefault();
+            if (unit == null)
+            {
+                e.Accepted = false;
+                return;
+            }
+
+            // Apply selected filter
+            switch (SelectedFilter)
+            {
+                // Handle generic filters
+                case "All": e.Accepted = true; break;
+                case "Light Side": e.Accepted = unit.forceAlignment == goh_ui.UnitDetails.ALIGNMENT_LIGHT; break;
+                case "Dark Side": e.Accepted = unit.forceAlignment == goh_ui.UnitDetails.ALIGNMENT_DARK; break;
+                // Handle tag-based filters
+                default: e.Accepted = unit.categoryIdList.Contains(SelectedFilter); break;
+            }
+        }
+
+        #endregion
+
+        #region Squad searching
 
         /// <summary> Search for squads matching the current setup. </summary>
         private void DoSearch()
@@ -170,6 +278,8 @@ namespace goh_ui.Viewmodels
 
         /// <summary> Command executed when the 'Search' button is pressed. </summary>
         public SimpleCommand SearchCommand { get; private set; }
+
+        #endregion
 
         #region Squad presets
 
@@ -227,6 +337,10 @@ namespace goh_ui.Viewmodels
                 return;
 
             var pr = PresetsList.Where(p => p.Name == name).First();
+
+            // Must clear any filters or units might not be selectable
+            if (ShowFilter)
+                SelectedFilter = Filters.First();
 
             // Override dropdowns with preset
             SelectedUnit1 = FindUnit(pr.Character1);
