@@ -162,7 +162,7 @@ namespace goh_ui
 
         private GuildInfo guild;
 
-        private UnitDetails[] unitDetails;
+        private GameData gameData;
 
         /// <summary> Unprocessed player data as returned by the API.  Only use for serialization purposes. </summary>
         private List<PlayerInfo> rawPlayerInfo;
@@ -193,6 +193,8 @@ namespace goh_ui
             ShowAbout = new SimpleCommand(() => AboutWindow.Display(this.parent));
 
             api = new ApiWrapper();
+
+            gameData = new GameData();
 
             CurrentActivity = "No data available";
 
@@ -351,7 +353,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new UnitLookupViewmodel(Members, unitDetails?.ToList());
+            var vm = new UnitLookupViewmodel(Members, gameData.Units);
             var view = new UnitLookupView(vm) { Owner = parent };
             view.ShowDialog();
         }
@@ -366,7 +368,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new SquadFinderViewmodel(Members, unitDetails?.ToList());
+            var vm = new SquadFinderViewmodel(Members, gameData.Units);
             var view = new SquadFinderView(vm) { Owner = parent };
             view.ShowDialog();
         }
@@ -495,7 +497,6 @@ namespace goh_ui
                 rawPlayerInfo = pinfo;
 
                 // Build task to fetch title metadata
-                List<TitleInfo> _titles = new List<TitleInfo>();
                 var title_task = api.GetTitleInfo();
                 var tt = title_task.ContinueWith((task) =>
                 {
@@ -514,7 +515,7 @@ namespace goh_ui
                         return;
                     }
 
-                    _titles = task.Result;
+                    gameData.Titles = task.Result.ToArray();
                 });
 
                 // Build task to fetch relic power metadata
@@ -536,22 +537,7 @@ namespace goh_ui
                         return;
                     }
 
-                    int[] relic_modifiers = task.Result;
-                    if (relic_modifiers.Length == 7)
-                    {
-                        // Compute what the game would show for each unit's power
-                        foreach (var player in rawPlayerInfo)
-                        {
-                            foreach (var character in player.roster)
-                            {
-                                character.TruePower = character.gp;
-                                if (character.combatType == Character.COMBATTYPE_CHARACTER && character.gear >= 13 && character.relic.currentTier > 2)
-                                {
-                                    character.TruePower += (long)Math.Round(relic_modifiers[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
-                                }
-                            }
-                        }
-                    }
+                    gameData.RelicMultipliers = task.Result;
                 });
 
                 // Build task to fetch detailed character metadata
@@ -573,7 +559,7 @@ namespace goh_ui
                         return;
                     }
 
-                    unitDetails = task.Result;
+                    gameData.Units = task.Result;
                 });
 
                 // Run tasks in parallel and wait for them to complete
@@ -590,19 +576,26 @@ namespace goh_ui
                     return;
                 }
 
+                if (!gameData.HasData())
+                {
+                    ShowError("Unable to fetch required game data.");
+                    CurrentActivity = "No data available";
+                    return;
+                }
 
                 // Build roster
+                ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
                 foreach (var player in rawPlayerInfo)
                 {
                     Player p = new Player(player);
 
                     // Decode title
-                    if (_titles != null)
+                    if (gameData.Titles != null)
                     {
                         string selected_title = player.titles.selected;
-                        if (!string.IsNullOrWhiteSpace(selected_title) && _titles.Any(t => t.id == selected_title))
+                        if (!string.IsNullOrWhiteSpace(selected_title) && gameData.Titles.Any(t => t.id == selected_title))
                         {
-                            p.CurrentTitle = _titles.First(t => t.id == selected_title).name;
+                            p.CurrentTitle = gameData.Titles.First(t => t.id == selected_title).name;
                         }
                     }
 
@@ -646,6 +639,28 @@ namespace goh_ui
                 }
             }
 
+        }
+
+        /// <summary> Process a guild's roster and compute the true GP for each character. </summary>
+        /// <param name="guild_roster">List of guild members.</param>
+        /// <param name="relic_bonuses">Data from the "galactic power per tier" game data table.</param>
+        private static void ComputeTruePower(List<PlayerInfo> guild_roster, int[] relic_bonuses)
+        {
+            if (guild_roster == null || relic_bonuses == null || relic_bonuses.Length != 7)
+                return;
+
+            // Compute what the game would show for each unit's power
+            foreach (var player in guild_roster)
+            {
+                foreach (var character in player.roster)
+                {
+                    character.TruePower = character.gp;
+                    if (character.combatType == Character.COMBATTYPE_CHARACTER && character.gear >= 13 && character.relic.currentTier > 2)
+                    {
+                        character.TruePower += (long)Math.Round(relic_bonuses[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
+                    }
+                }
+            }
         }
 
 

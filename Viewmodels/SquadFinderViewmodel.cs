@@ -25,13 +25,13 @@ namespace goh_ui.Viewmodels
 
 
         /// <summary> List of detailed metadata for all defined units. </summary>
-        private List<UnitDetails> UnitDetails { get; set; }
+        private IEnumerable<UnitDetails> UnitDetails { get; set; }
 
         /// <summary> Data for each guild member. </summary>
         private PlayerList Members { get; set; }
 
 
-        public SquadFinderViewmodel(PlayerList members, List<UnitDetails> unitDetails)
+        public SquadFinderViewmodel(PlayerList members, IEnumerable<UnitDetails> unitDetails)
         {
             Members = members ?? throw new ArgumentNullException("members");
             UnitDetails = unitDetails;
@@ -88,7 +88,7 @@ namespace goh_ui.Viewmodels
 
             // Use UnitDetails if available, since it can contain units not found
             // in any player's roster.
-            if (UnitDetails != null && UnitDetails.Count > 0)
+            if (UnitDetails != null && UnitDetails.Count() > 0)
             {
                 foreach (var name in UnitDetails.Where(u => u.combatType == goh_ui.UnitDetails.COMBATTYPE_CHARACTER).Select(u => u.name).OrderBy(x => x))
                     Units.Add(name);
@@ -194,7 +194,7 @@ namespace goh_ui.Viewmodels
         {
             Filters.Clear();
 
-            if (UnitDetails == null || UnitDetails.Count == 0)
+            if (UnitDetails == null || UnitDetails.Count() == 0)
                 return;
 
             // Add a few generic filters at the top of the list.
@@ -210,7 +210,7 @@ namespace goh_ui.Viewmodels
         private void FilterUnits(object sender, FilterEventArgs e)
         {
             // If filters aren't supported, return everything
-            if (UnitDetails == null || UnitDetails.Count == 0)
+            if (UnitDetails == null || UnitDetails.Count() == 0)
             {
                 e.Accepted = true;
                 return;

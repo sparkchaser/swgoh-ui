@@ -21,14 +21,22 @@ namespace goh_ui.Viewmodels
                 return DependencyProperty.Register(name, typeof(T), typeof(UnitLookupViewmodel));
         }
 
-        public UnitLookupViewmodel(PlayerList members, List<UnitDetails> unitDetails)
+
+        /// <summary> Data for each guild member. </summary>
+        private PlayerList Members { get; set; }
+
+        /// <summary> List of detailed metadata for all defined units. </summary>
+        private IEnumerable<UnitDetails> UnitDetails { get; set; }
+
+
+        public UnitLookupViewmodel(PlayerList members, IEnumerable<UnitDetails> unitDetails)
         {
             Members = members ?? throw new ArgumentNullException("members");
             UnitDetails = unitDetails;
 
             AllUnits = new ObservableCollection<string>();
 
-            if (UnitDetails != null && UnitDetails.Count > 0)
+            if (UnitDetails != null && UnitDetails.Count() > 0)
             {
                 FilterVisible = true;
                 foreach (var unitname in unitDetails.Select(u => u.name).OrderBy(x => x))
@@ -48,14 +56,9 @@ namespace goh_ui.Viewmodels
             SelectedFilter = Filters.FirstOrDefault();
         }
 
+
         /// <summary> Filtered list of units. </summary>
         public CollectionViewSource UnitSource { get; private set; }
-
-        /// <summary> Data for each guild member. </summary>
-        public PlayerList Members { get; private set; }
-
-        /// <summary> List of detailed metadata for all defined units. </summary>
-        public List<UnitDetails> UnitDetails { get; private set; }
 
         /// <summary> Complete list of all known units. </summary>
         public ObservableCollection<string> AllUnits { get; private set; }
@@ -128,6 +131,8 @@ namespace goh_ui.Viewmodels
                                         new PropertyMetadata(null, SelectedFilterChanged));
         #endregion
 
+        #region Unit filtering
+
         /// <summary> Whenever the selected filter changes, signal the view to refresh the list. </summary>
         private static void SelectedFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -139,7 +144,7 @@ namespace goh_ui.Viewmodels
         {
             Filters.Clear();
 
-            if (UnitDetails == null || UnitDetails.Count == 0)
+            if (UnitDetails == null || UnitDetails.Count() == 0)
                 return;
 
             // Add a few generic filters at the top of the list.
@@ -157,7 +162,7 @@ namespace goh_ui.Viewmodels
         private void FilterUnits(object sender, FilterEventArgs e)
         {
             // If filters aren't supported, return everything
-            if (UnitDetails == null || UnitDetails.Count == 0)
+            if (UnitDetails == null || UnitDetails.Count() == 0)
             {
                 e.Accepted = true;
                 return;
@@ -185,6 +190,8 @@ namespace goh_ui.Viewmodels
                 default: e.Accepted = unit.categoryIdList.Contains(SelectedFilter); break;
             }
         }
+
+        #endregion
     }
     
     /// <summary>
