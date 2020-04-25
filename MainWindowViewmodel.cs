@@ -167,6 +167,9 @@ namespace goh_ui
         /// <summary> File where misc. game metadata is cached. </summary>
         private static readonly string GameDataFile = Path.Combine(SettingsDirectory, "game_data.json");
 
+        /// <summary> File where cached program settings are stored. </summary>
+        private static readonly string SettingsFile = Path.Combine(SettingsDirectory, "settings.json");
+
         #endregion
 
         private ApiWrapper api;
@@ -174,6 +177,8 @@ namespace goh_ui
         private GuildInfo guild;
 
         private GameData gameData;
+
+        private ProgramSettings settings;
 
         /// <summary> Unprocessed player data as returned by the API.  Only use for serialization purposes. </summary>
         private List<PlayerInfo> rawPlayerInfo;
@@ -209,15 +214,16 @@ namespace goh_ui
             if (!Directory.Exists(SettingsDirectory))
                 Directory.CreateDirectory(SettingsDirectory);
 
+            settings = ProgramSettings.LoadOrCreate(SettingsFile);
             gameData = GameData.LoadOrCreate(GameDataFile);
             DebugMessage($"Game Data is {(gameData.HasData() ? "present" : "missing")}, {(gameData.IsOutdated() ? "outdated" : "up-to-date")}");
 
             CurrentActivity = "No data available";
 
             // Pull user settings from last time
-            Username = Properties.Settings.Default.username;
-            UserId = Properties.Settings.Default.userid;
-            AllyCode = Properties.Settings.Default.allycode;
+            Username = settings.username;
+            UserId = settings.userid;
+            AllyCode = settings.allycode;
         }
 
         /// <summary> Display an error message in a dialog box. </summary>
@@ -410,10 +416,10 @@ namespace goh_ui
             }
 
             // If we successfully logged in, store these settings to re-use next time
-            Properties.Settings.Default.username = Username;
-            Properties.Settings.Default.userid = UserId;
-            Properties.Settings.Default.allycode = AllyCode;
-            Properties.Settings.Default.Save();
+            settings.username = Username;
+            settings.userid = UserId;
+            settings.allycode = AllyCode;
+            ProgramSettings.Store(settings, SettingsFile);
 
             CurrentActivity = "Fetching guild information";
             GuildInfo resp = null;
