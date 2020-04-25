@@ -1,5 +1,6 @@
-﻿
+﻿using Newtonsoft.Json;
 using System;
+using System.IO;
 
 namespace goh_ui.Models
 {
@@ -37,5 +38,51 @@ namespace goh_ui.Models
         /// <returns>True if the data is stale, false if recent enough.</returns>
         /// <remarks>Data is considered stale if it's more than a week old.</remarks>
         public bool IsOutdated() => Updated <= DateTime.Now.AddDays(-7);
+
+        #region Object serialization
+
+        /// <summary> Load cached game metadata from disk if it exists. </summary>
+        /// <param name="file"> Path to target file. </param>
+        public static GameData LoadOrCreate(string file)
+        {
+            GameData retval;
+            try
+            {
+                using (StreamReader fd = File.OpenText(file))
+                {
+                    JsonSerializer js = new JsonSerializer();
+                    retval = (GameData)js.Deserialize(fd, typeof(GameData));
+                }
+            }
+            // Create new if file doesn't exist or can't be decoded
+            catch (FileNotFoundException) { return new GameData(); }
+            catch (IOException) { return new GameData(); }
+            catch (JsonException) { return new GameData(); }
+
+            return retval;
+        }
+
+        /// <summary> Store a <see cref="GameData"/> object to disk. </summary>
+        /// <param name="data"> Object to store. </param>
+        /// <param name="file"> Path to target file. </param>
+        public static void Store(GameData data, string file)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+            if (file == null)
+                throw new ArgumentNullException("file");
+            if (string.IsNullOrWhiteSpace(file))
+                throw new ArgumentException("Target file path was empty.", "file");
+            if (!data.HasData())
+                throw new InvalidOperationException("Object to serialize is not complete.");
+
+            using (StreamWriter fd = File.CreateText(file))
+            {
+                JsonSerializer js = new JsonSerializer();
+                js.Serialize(fd, data);
+            }
+        }
+
+        #endregion
     }
 }

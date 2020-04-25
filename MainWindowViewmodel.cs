@@ -159,6 +159,15 @@ namespace goh_ui
 
         #endregion
 
+        #region File/folder paths
+
+        /// <summary> Directory where the program stores settings and cached data. </summary>
+        private static readonly string SettingsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "swgoh-ui");
+
+        /// <summary> File where misc. game metadata is cached. </summary>
+        private static readonly string GameDataFile = Path.Combine(SettingsDirectory, "game_data.json");
+
+        #endregion
 
         private ApiWrapper api;
 
@@ -196,7 +205,12 @@ namespace goh_ui
 
             api = new ApiWrapper();
 
-            gameData = new GameData();
+            // Load settings and metadata from disk
+            if (!Directory.Exists(SettingsDirectory))
+                Directory.CreateDirectory(SettingsDirectory);
+
+            gameData = GameData.LoadOrCreate(GameDataFile);
+            DebugMessage($"Game Data is {(gameData.HasData() ? "present" : "missing")}, {(gameData.IsOutdated() ? "outdated" : "up-to-date")}");
 
             CurrentActivity = "No data available";
 
@@ -328,6 +342,13 @@ namespace goh_ui
             }
             LoggedIn = true;
             CurrentActivity = "Ready";
+
+            // Build roster
+            if (gameData.HasData())
+            {
+                ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
+                BuildRoster(rawPlayerInfo, gameData.Titles);
+            }
         }
 
         /// <summary> Display guild roster. </summary>
@@ -457,18 +478,18 @@ namespace goh_ui
 
                 if (!gameData.HasData() || gameData.IsOutdated())
                 {
-                    if (await UpdateGameData() == false)
+                    DebugMessage("Game metadata update needed");
+                    CurrentActivity = "Fetching game data";
+                    gameData = await UpdateGameData();
+
+                    if (!gameData.HasData() || gameData.IsOutdated())
                     {
                         CurrentActivity = "No data available";
                         return;
                     }
-                }
 
-                if (!gameData.HasData())
-                {
-                    ShowError("Unable to fetch required game data.");
-                    CurrentActivity = "No data available";
-                    return;
+                    // Cache game metadata
+                    GameData.Store(gameData, GameDataFile);
                 }
 
                 // Build roster
@@ -617,9 +638,11 @@ namespace goh_ui
         }
 
         /// <summary> Download misc. game metadata. </summary>
-        /// <returns>True on success, false otherwise.</returns>
-        private async Task<bool> UpdateGameData()
+        /// <returns>Up-to-date game data on success, default value on error.</returns>
+        private async Task<GameData> UpdateGameData()
         {
+            GameData data = new GameData();
+
             // Build task to fetch title metadata
             var title_task = api.GetTitleInfo();
             var tt = title_task.ContinueWith((task) =>
@@ -639,7 +662,7 @@ namespace goh_ui
                     return;
                 }
 
-                gameData.Titles = task.Result.ToArray();
+                data.Titles = task.Result.ToArray();
             });
 
             // Build task to fetch relic power metadata
@@ -661,7 +684,7 @@ namespace goh_ui
                     return;
                 }
 
-                gameData.RelicMultipliers = task.Result;
+                data.RelicMultipliers = task.Result;
             });
 
             // Build task to fetch detailed character metadata
@@ -683,29 +706,26 @@ namespace goh_ui
                     return;
                 }
 
-                gameData.Units = task.Result;
+                data.Units = task.Result;
             });
 
             // Run tasks in parallel and wait for them to complete
-            CurrentActivity = "Fetching game data";
             DebugMessage($"Game Data: Start");
             try
             {
                 await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
+                await Task.WhenAll(new Task[] { tt, rt, ut });
             }
             catch (Exception e)
             {
                 ShowError($"Error fetching game data:\n{e.Message}");
-                CurrentActivity = "No data available";
-                return false;
+                return new GameData();
             }
 
-            if (gameData.HasData())
-            {
-                gameData.Updated = DateTime.Now;
-            }
+            // Update timestamp so object will register as complete and up-to-date
+            data.Updated = DateTime.Now;
 
-            return true;
+            return data;
         }
 
 
