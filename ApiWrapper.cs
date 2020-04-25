@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -158,7 +159,7 @@ namespace goh_ui
         /// <param name="code">Ally code of someone in the guild.</param>
         public async Task<GuildInfo> GetGuildInfo(AllyCode code)
         {
-            string resp;
+            Stream resp;
             try
             {
                 resp = await MakeApiRequest(new PlayerGuildInfoCommand() { allycodes = new string[] { code.Value.ToString() } }, URL_GUILDS);
@@ -170,7 +171,15 @@ namespace goh_ui
                 return null;
             }
 
-            GuildInfo[] retval = JsonConvert.DeserializeObject<GuildInfo[]>(resp);
+            GuildInfo[] retval;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                retval = ser.Deserialize<GuildInfo[]>(js);
+            }
+            resp.Dispose();
+            
             if (retval == null || retval.Length == 0)
             {
                 return null;
@@ -183,7 +192,7 @@ namespace goh_ui
         /// <param name="code">Player's ally code.</param>
         public async Task<List<PlayerInfo>> GetPlayerInfo(IEnumerable<AllyCode> codes)
         {
-            string resp;
+            Stream resp;
             try
             {
                 resp = await MakeApiRequest(new PlayerGuildInfoCommand() { allycodes = codes.Select(c => c.Value.ToString()).ToArray() }, URL_PLAYER);
@@ -194,7 +203,15 @@ namespace goh_ui
                 return null;
             }
 
-            PlayerInfo[] retval = JsonConvert.DeserializeObject<PlayerInfo[]>(resp);
+            PlayerInfo[] retval;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                retval = ser.Deserialize<PlayerInfo[]>(js);
+            }
+            resp.Dispose();
+            
             if (retval == null || retval.Length == 0)
             {
                 return null;
@@ -206,7 +223,7 @@ namespace goh_ui
         /// <summary> Fetch metadata mapping IDs to player titles. </summary>
         public async Task<List<TitleInfo>> GetTitleInfo()
         {
-            string resp;
+            Stream resp;
             try
             {
                 resp = await MakeApiRequest(new GameDataCommand() { collection = "playerTitleList" }, URL_DATA);
@@ -217,7 +234,15 @@ namespace goh_ui
                 return null;
             }
 
-            TitleInfo[] retval = JsonConvert.DeserializeObject<TitleInfo[]>(resp);
+            TitleInfo[] retval;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                retval = ser.Deserialize<TitleInfo[]>(js);
+            }
+            resp.Dispose();
+            
             if (retval == null || retval.Length == 0)
             {
                 return null;
@@ -229,7 +254,7 @@ namespace goh_ui
         /// <summary> Fetch relic tier GP bonus info. </summary>
         public async Task<int[]> GetRelicMetadata()
         {
-            string resp;
+            Stream resp;
             try
             {
                 var payload = new GameDataCommand() { collection = "tableList" };
@@ -245,7 +270,15 @@ namespace goh_ui
                 return new int[] { };
             }
 
-            DataTable[] retval = JsonConvert.DeserializeObject<DataTable[]>(resp);
+            DataTable[] retval;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                retval = ser.Deserialize<DataTable[]>(js);
+            }
+            resp.Dispose();
+            
             if (retval == null || retval.Length == 0)
             {
                 return new int[] { };
@@ -261,7 +294,7 @@ namespace goh_ui
         /// <remarks> This data is not included in what gets returned for a player's roster. </remarks>
         public async Task<UnitDetails[]> GetUnitDetails()
         {
-            string resp;
+            Stream resp;
             try
             {
                 // This table contains an enormous amount of information.
@@ -290,7 +323,15 @@ namespace goh_ui
                 return new UnitDetails[] { };
             }
 
-            UnitDetails[] units = JsonConvert.DeserializeObject<UnitDetails[]>(resp);
+            UnitDetails[] units;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                units = ser.Deserialize<UnitDetails[]>(js);
+            }
+            resp.Dispose();
+            
             if (units == null || units.Length == 0)
             {
                 return new UnitDetails[] { };
@@ -322,7 +363,15 @@ namespace goh_ui
                 return new UnitDetails[] { };
             }
 
-            Category[] categories = JsonConvert.DeserializeObject<Category[]>(resp);
+            Category[] categories;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                categories = ser.Deserialize<Category[]>(js);
+            }
+            resp.Dispose();
+            
             if (categories == null || categories.Length == 0)
             {
                 return new UnitDetails[] { };
@@ -410,13 +459,13 @@ namespace goh_ui
         };
 
 
-        /// <summary> POST a request to the web API and return the result as a string. </summary>
+        /// <summary> POST a request to the web API and return the result as a stream. </summary>
         /// <param name="payload">Command payload (will be serialized to JSON).</param>
         /// <param name="requestUri">Relative URI to send request to.</param>
-        /// <returns>Contents of the HTTP response, as a string.</returns>
+        /// <returns>Contents of the HTTP response, as a stream.</returns>
         /// <exception cref="InvalidOperationException">User is not currently logged in.</exception>
         /// <exception cref="ApiErrorException">API request failed.</exception>
-        private async Task<string> MakeApiRequest(object payload, string requestUri)
+        private async Task<Stream> MakeApiRequest(object payload, string requestUri)
         {
             if (!token.IsValid)
             {
@@ -447,7 +496,7 @@ namespace goh_ui
                 throw new ApiErrorException(result);
             }
 
-            return await result.Content.ReadAsStringAsync();
+            return await result.Content.ReadAsStreamAsync();
         }
 
         /// <summary> Display an error message in a popup window. </summary>
