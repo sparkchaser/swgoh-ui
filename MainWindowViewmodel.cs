@@ -384,41 +384,8 @@ namespace goh_ui
         {
             if (!api.IsLoggedIn)
             {
-                // Verify that all necessary information has been provided
-                if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(AllyCode))
-                {
-                    ShowError("Please provide all credentials.");
+                if (await DoLogin() == false)
                     return;
-                }
-
-                // Set up API helper
-                api.UpdateCredentials(Username, Password, UserId, AllyCode);
-                if (!api.AllInputsProvided)
-                {
-                    ShowError("Credentials not provided or invalid");
-                    return;
-                }
-
-                // Try to log in
-                CurrentActivity = "Logging in";
-                DebugMessage($"Log In: Start");
-                var result = false;
-                try
-                {
-                    result = await api.LogIn();
-                }
-                catch (Exception e)
-                {
-                    ShowError($"Error:\n{e.Message}");
-                }
-                DebugMessage($"Log In: End");
-
-                LoggedIn = result;
-                if (!LoggedIn)
-                {
-                    CurrentActivity = "No data available";
-                    return;
-                }
             }
 
             // If we successfully logged in, store these settings to re-use next time
@@ -475,148 +442,25 @@ namespace goh_ui
                 if (rawPlayerInfo == null || rawPlayerInfo.First().Updated < DateTimeOffset.Now.AddHours(-8) || rawPlayerInfo.Count != guild.members)
                 {
                     // Fetch player info
-                    CurrentActivity = "Fetching member details";
-                    DebugMessage($"Player Info: Start");
-                    var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
-
-                    ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
-
-                    // Fetch no more than 5 players' worth of data at a time to help avoid timeouts (can take 4-6 sec per player)
-                    // Also, limit number of simultaneous requests to 3 to avoid overloading the server.
-                    var chunks = codes.Select((item, idx) => new { item, idx }).GroupBy(x => x.idx / 5).Select(x => x.Select(y => y.item));
-                    var throttle = new SemaphoreSlim(3, 3);
-                    var tasks = chunks.Select(async chunk =>
-                    {
-                        await throttle.WaitAsync();
-                        try
-                        {
-                            DebugMessage($"Fetching new group of players [{chunk.First()}]");
-                            List<PlayerInfo> these_players;
-                            try
-                            {
-                                these_players = await api.GetPlayerInfo(chunk);
-                            }
-                            catch (Newtonsoft.Json.JsonReaderException e)
-                            {
-                                ShowError($"Error deserializing JSON:\n{e.Message}");
-                                return;
-                            }
-                            catch (Exception e)
-                            {
-                                ShowError($"Error fetching members:\n{e.Message}");
-                                return;
-                            }
-
-                            if (these_players != null)
-                                foreach (var p in these_players)
-                                    pinfo.Add(p);
-                            DebugMessage($"Finished group [{chunk.First()}]");
-                        }
-                        finally
-                        {
-                            throttle.Release();
-                        }
-                    });
-                    await Task.WhenAll(tasks);
-                    DebugMessage($"Player Info: End");
-
-                    // Update UI and VM with results
                     Members.Clear();
-                    rawPlayerInfo = null;
-                    if (!success || pinfo == null || pinfo.Count != codes.Count())
+                    var codes = guild.roster.Select(r => new AllyCode((uint)r.allyCode));
+                    var pdata = await UpdatePlayerData(codes);
+
+                    if (pdata == null)
                     {
-                        CurrentActivity = "No data available";
+                        rawPlayerInfo = null;
                         return;
                     }
 
-                    rawPlayerInfo = pinfo.ToList();
+                    rawPlayerInfo = pdata;
                 }
 
                 if (!gameData.HasData() || gameData.IsOutdated())
                 {
-                    // Build task to fetch title metadata
-                    var title_task = api.GetTitleInfo();
-                    var tt = title_task.ContinueWith((task) =>
+                    if (await UpdateGameData() == false)
                     {
-                        DebugMessage($"Title Data: End");
-                        if (task.IsFaulted)
-                        {
-                            task.Exception.Handle(e =>
-                            {
-                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                    ShowError($"Error deserializing JSON:\n{e.Message}");
-                                else
-                                    ShowError($"Error fetching titles:\n{e.Message}");
-                                return true;
-                            });
-
-                            return;
-                        }
-
-                        gameData.Titles = task.Result.ToArray();
-                    });
-
-                    // Build task to fetch relic power metadata
-                    var relic_task = api.GetRelicMetadata();
-                    var rt = relic_task.ContinueWith((task) =>
-                    {
-                        DebugMessage($"Relic Data: End");
-                        if (task.IsFaulted)
-                        {
-                            task.Exception.Handle(e =>
-                            {
-                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                    ShowError($"Error deserializing JSON:\n{e.Message}");
-                                else
-                                    ShowError($"Error fetching relic metadata:\n{e.Message}");
-                                return true;
-                            });
-
-                            return;
-                        }
-
-                        gameData.RelicMultipliers = task.Result;
-                    });
-
-                    // Build task to fetch detailed character metadata
-                    var units_task = api.GetUnitDetails();
-                    var ut = units_task.ContinueWith((task) =>
-                    {
-                        DebugMessage($"Unit Data: End");
-                        if (task.IsFaulted)
-                        {
-                            task.Exception.Handle(e =>
-                            {
-                                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
-                                    ShowError($"Error deserializing JSON:\n{e.Message}");
-                                else
-                                    ShowError($"Error fetching unit metadata:\n{e.Message}");
-                                return true;
-                            });
-
-                            return;
-                        }
-
-                        gameData.Units = task.Result;
-                    });
-
-                    // Run tasks in parallel and wait for them to complete
-                    CurrentActivity = "Fetching game data";
-                    DebugMessage($"Game Data: Start");
-                    try
-                    {
-                        await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
-                    }
-                    catch (Exception e)
-                    {
-                        ShowError($"Error fetching game data:\n{e.Message}");
                         CurrentActivity = "No data available";
                         return;
-                    }
-
-                    if (gameData.HasData())
-                    {
-                        gameData.Updated = DateTime.Now;
                     }
                 }
 
@@ -629,22 +473,7 @@ namespace goh_ui
 
                 // Build roster
                 ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
-                foreach (var player in rawPlayerInfo)
-                {
-                    Player p = new Player(player);
-
-                    // Decode title
-                    if (gameData.Titles != null)
-                    {
-                        string selected_title = player.titles.selected;
-                        if (!string.IsNullOrWhiteSpace(selected_title) && gameData.Titles.Any(t => t.id == selected_title))
-                        {
-                            p.CurrentTitle = gameData.Titles.First(t => t.id == selected_title).name;
-                        }
-                    }
-
-                    Members.Add(p);
-                }
+                BuildRoster(rawPlayerInfo, gameData.Titles);
 
                 CurrentActivity = "Ready";
                 DebugMessage("Ready");
@@ -685,6 +514,201 @@ namespace goh_ui
 
         }
 
+        /// <summary> Log into the web server and get an authentication token. </summary>
+        /// <returns>True on success, false otherwise.</returns>
+        private async Task<bool> DoLogin()
+        {
+            // Verify that all necessary information has been provided
+            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(AllyCode))
+            {
+                ShowError("Please provide all credentials.");
+                return false;
+            }
+
+            // Set up API helper
+            api.UpdateCredentials(Username, Password, UserId, AllyCode);
+            if (!api.AllInputsProvided)
+            {
+                ShowError("Credentials not provided or invalid");
+                return false;
+            }
+
+            // Try to log in
+            CurrentActivity = "Logging in";
+            DebugMessage($"Log In: Start");
+            var result = false;
+            try
+            {
+                result = await api.LogIn();
+            }
+            catch (Exception e)
+            {
+                ShowError($"Error:\n{e.Message}");
+            }
+            DebugMessage($"Log In: End");
+
+            LoggedIn = result;
+            if (!LoggedIn)
+            {
+                CurrentActivity = "No data available";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary> Download detailed information for the players in a guild. </summary>
+        /// <returns>A list of player information on success, null otherwise.</returns>
+        private async Task<List<PlayerInfo>> UpdatePlayerData(IEnumerable<AllyCode> codes)
+        {
+            // Fetch player info
+            CurrentActivity = "Fetching member details";
+            DebugMessage($"Player Info: Start");
+
+            ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
+
+            // Fetch no more than 5 players' worth of data at a time to help avoid timeouts (can take 4-6 sec per player)
+            // Also, limit number of simultaneous requests to 3 to avoid overloading the server.
+            var chunks = codes.Select((item, idx) => new { item, idx }).GroupBy(x => x.idx / 5).Select(x => x.Select(y => y.item));
+            var throttle = new SemaphoreSlim(3, 3);
+            var tasks = chunks.Select(async chunk =>
+            {
+                await throttle.WaitAsync();
+                try
+                {
+                    DebugMessage($"Fetching new group of players [{chunk.First()}]");
+                    List<PlayerInfo> these_players;
+                    try
+                    {
+                        these_players = await api.GetPlayerInfo(chunk);
+                    }
+                    catch (Newtonsoft.Json.JsonReaderException e)
+                    {
+                        ShowError($"Error deserializing JSON:\n{e.Message}");
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        ShowError($"Error fetching members:\n{e.Message}");
+                        return;
+                    }
+
+                    if (these_players != null)
+                        foreach (var p in these_players)
+                            pinfo.Add(p);
+                    DebugMessage($"Finished group [{chunk.First()}]");
+                }
+                finally
+                {
+                    throttle.Release();
+                }
+            });
+            await Task.WhenAll(tasks);
+            DebugMessage($"Player Info: End");
+
+            // Update UI and VM with results
+            if (pinfo.Count != codes.Count())
+            {
+                CurrentActivity = "No data available";
+                return null;
+            }
+
+            return pinfo.ToList();
+        }
+
+        /// <summary> Download misc. game metadata. </summary>
+        /// <returns>True on success, false otherwise.</returns>
+        private async Task<bool> UpdateGameData()
+        {
+            // Build task to fetch title metadata
+            var title_task = api.GetTitleInfo();
+            var tt = title_task.ContinueWith((task) =>
+            {
+                DebugMessage($"Title Data: End");
+                if (task.IsFaulted)
+                {
+                    task.Exception.Handle(e =>
+                    {
+                        if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                            ShowError($"Error deserializing JSON:\n{e.Message}");
+                        else
+                            ShowError($"Error fetching titles:\n{e.Message}");
+                        return true;
+                    });
+
+                    return;
+                }
+
+                gameData.Titles = task.Result.ToArray();
+            });
+
+            // Build task to fetch relic power metadata
+            var relic_task = api.GetRelicMetadata();
+            var rt = relic_task.ContinueWith((task) =>
+            {
+                DebugMessage($"Relic Data: End");
+                if (task.IsFaulted)
+                {
+                    task.Exception.Handle(e =>
+                    {
+                        if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                            ShowError($"Error deserializing JSON:\n{e.Message}");
+                        else
+                            ShowError($"Error fetching relic metadata:\n{e.Message}");
+                        return true;
+                    });
+
+                    return;
+                }
+
+                gameData.RelicMultipliers = task.Result;
+            });
+
+            // Build task to fetch detailed character metadata
+            var units_task = api.GetUnitDetails();
+            var ut = units_task.ContinueWith((task) =>
+            {
+                DebugMessage($"Unit Data: End");
+                if (task.IsFaulted)
+                {
+                    task.Exception.Handle(e =>
+                    {
+                        if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                            ShowError($"Error deserializing JSON:\n{e.Message}");
+                        else
+                            ShowError($"Error fetching unit metadata:\n{e.Message}");
+                        return true;
+                    });
+
+                    return;
+                }
+
+                gameData.Units = task.Result;
+            });
+
+            // Run tasks in parallel and wait for them to complete
+            CurrentActivity = "Fetching game data";
+            DebugMessage($"Game Data: Start");
+            try
+            {
+                await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
+            }
+            catch (Exception e)
+            {
+                ShowError($"Error fetching game data:\n{e.Message}");
+                CurrentActivity = "No data available";
+                return false;
+            }
+
+            if (gameData.HasData())
+            {
+                gameData.Updated = DateTime.Now;
+            }
+
+            return true;
+        }
+
+
         /// <summary> Process a guild's roster and compute the true GP for each character. </summary>
         /// <param name="guild_roster">List of guild members.</param>
         /// <param name="relic_bonuses">Data from the "galactic power per tier" game data table.</param>
@@ -704,6 +728,30 @@ namespace goh_ui
                         character.TruePower += (long)Math.Round(relic_bonuses[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
                     }
                 }
+            }
+        }
+
+        /// <summary> Populate <see cref="Members"/> with data from a guild's roster. </summary>
+        /// <param name="guild_roster"> List of guild members. </param>
+        /// <param name="titles"> (Optional) Metadata for decoding player titles. </param>
+        private void BuildRoster(List<PlayerInfo> guild_roster, IEnumerable<TitleInfo> titles)
+        {
+            Members.Clear();
+            foreach (var player in guild_roster)
+            {
+                Player p = new Player(player);
+
+                // Decode title
+                if (titles != null)
+                {
+                    string selected_title = player.titles.selected;
+                    if (!string.IsNullOrWhiteSpace(selected_title) && titles.Any(t => t.id == selected_title))
+                    {
+                        p.CurrentTitle = titles.First(t => t.id == selected_title).name;
+                    }
+                }
+
+                Members.Add(p);
             }
         }
 
