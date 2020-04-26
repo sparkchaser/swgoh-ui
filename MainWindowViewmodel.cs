@@ -134,6 +134,22 @@ namespace goh_ui
         }
         public static readonly DependencyProperty PlayerNameProperty = _dp<string>("PlayerName", "");
 
+        /// <summary> Whether to unlock tools that require certain data to be available. </summary>
+        public bool UnlockTools
+        {
+            get { return (bool)GetValue(UnlockToolsProperty); }
+            set { SetValue(UnlockToolsProperty, value); }
+        }
+        public static readonly DependencyProperty UnlockToolsProperty = _dp<bool>("UnlockTools");
+
+        /// <summary> Whether to unlock the main "Fetch Data" button. </summary>
+        public bool UnlockFetch
+        {
+            get { return (bool)GetValue(UnlockFetchProperty); }
+            set { SetValue(UnlockFetchProperty, value); }
+        }
+        public static readonly DependencyProperty UnlockFetchProperty = _dp<bool>("UnlockFetch");
+
         #endregion
 
 
@@ -251,6 +267,7 @@ namespace goh_ui
         /// <param name="new_state">New program state.</param>
         private void UpdateProgramState(ProgramState new_state)
         {
+            // Update status bar message
             switch(new_state)
             {
                 case ProgramState.NO_DATA_AVAILABLE:
@@ -278,6 +295,11 @@ namespace goh_ui
                     new_state = ProgramState.UNKNOWN;
                     break;
             }
+
+            // Update GUI enable/disable flags
+            UnlockTools = new_state == ProgramState.READY;
+            UnlockFetch = new_state == ProgramState.READY || new_state == ProgramState.NO_DATA_AVAILABLE;
+
             state = new_state;
         }
 

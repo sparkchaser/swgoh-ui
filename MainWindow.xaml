@@ -33,7 +33,8 @@
             <MenuItem Header="_File">
                 <MenuItem Header="_Export Data ..."
                           ToolTip="Save raw data to a file"
-                          Command="{Binding Path=ExportCommand}"/>
+                          Command="{Binding Path=ExportCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
                 <MenuItem Header="_Import Data ..."
                           ToolTip="Load data from a file"
                           Command="{Binding Path=ImportCommand}"/>
@@ -48,13 +49,16 @@
 
             <MenuItem Header="_Tools">
                 <MenuItem Header="G_uild Roster"
-                          Command="{Binding Path=RosterCommand}"/>
+                          Command="{Binding Path=RosterCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
                 <MenuItem Header="_Who Has"
                           ToolTip="Check who has a specific character"
-                          Command="{Binding Path=WhoHasCommand}"/>
+                          Command="{Binding Path=WhoHasCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
                 <MenuItem Header="_Squad Checker"
                           ToolTip="Find all guild members who have a particular squad"
-                          Command="{Binding Path=SquadCheckerCommand}"/>
+                          Command="{Binding Path=SquadCheckerCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
             </MenuItem>
 
             <MenuItem Header="_About"
@@ -64,7 +68,7 @@
         
         <!-- Login info entry -->
         <GroupBox Header="Login info" Grid.Row="1" Grid.Column="0" Margin="2">
-            <Grid>
+            <Grid IsEnabled="{Binding Path=UnlockFetch}">
                 <Grid.Resources>
                     <Style TargetType="Label">
                         <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -118,6 +122,7 @@
                     Width="80"
                     Margin="5"
                     Command="{Binding Path=GetGuildCommand}"
+                    IsEnabled="{Binding Path=UnlockFetch}"
                     HorizontalAlignment="Right"
                     ToolTip="Fetch guild data"/>
             <Border Margin="0,2"
