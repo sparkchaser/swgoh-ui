@@ -38,6 +38,10 @@
                           ToolTip="Load data from a file"
                           Command="{Binding Path=ImportCommand}"/>
                 <Separator/>
+                <MenuItem Header="_Refresh Game Data ..."
+                          ToolTip="Re-download game metadata"
+                          Command="{Binding Path=RefreshDataCommand}"/>
+                <Separator/>
                 <MenuItem Header="E_xit"
                           Command="{Binding Path=ExitCommand}"/>
             </MenuItem>

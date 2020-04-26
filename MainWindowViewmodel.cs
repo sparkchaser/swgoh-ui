@@ -152,6 +152,7 @@ namespace goh_ui
         public SimpleCommand ExitCommand { get; private set; }
         public SimpleCommand ExportCommand { get; private set; }
         public SimpleCommand ImportCommand { get; private set; }
+        public SimpleCommand RefreshDataCommand { get; private set; }
         public SimpleCommand RosterCommand { get; private set; }
         public SimpleCommand WhoHasCommand { get; private set; }
         public SimpleCommand SquadCheckerCommand { get; private set; }
@@ -203,6 +204,7 @@ namespace goh_ui
             ExitCommand = new SimpleCommand(DoExit);
             ExportCommand = new SimpleCommand(DoExport);
             ImportCommand = new SimpleCommand(DoImport);
+            RefreshDataCommand = new SimpleCommand(DoRefreshData);
             RosterCommand = new SimpleCommand(DoRoster);
             WhoHasCommand = new SimpleCommand(DoWhoHas);
             SquadCheckerCommand = new SimpleCommand(DoSquadChecker);
@@ -241,6 +243,9 @@ namespace goh_ui
                 return false;
 
             if (Members == null)
+                return false;
+
+            if (rawPlayerInfo == null)
                 return false;
 
             if (guild.members != Members.Count)
@@ -355,6 +360,47 @@ namespace goh_ui
                 ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
                 BuildRoster(rawPlayerInfo, gameData.Titles);
             }
+        }
+
+        /// <summary> Invalidate our misc. game data and re-download it. </summary>
+        private async void DoRefreshData()
+        {
+            DebugMessage("Game metadata update needed");
+            string old_status = CurrentActivity;
+
+            // Log in, if we aren't already
+            if (!api.IsLoggedIn)
+            {
+                if (await DoLogin() == false)
+                {
+                    CurrentActivity = "No data available";
+                    return;
+                }
+            }
+
+            // Re-fetch data
+            CurrentActivity = "Fetching game data";
+            gameData = await UpdateGameData();
+
+            if (!gameData.HasData() || gameData.IsOutdated())
+            {
+                CurrentActivity = "No data available";
+                return;
+            }
+
+            // Cache game metadata
+            GameData.Store(gameData, GameDataFile);
+
+            // Re-build rosters
+            ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
+            BuildRoster(rawPlayerInfo, gameData.Titles);
+
+            // Report status
+            DebugMessage("Game data update complete");
+            if (IsAllDataAvailable())
+                CurrentActivity = "Ready";
+            else
+                CurrentActivity = old_status;
         }
 
         /// <summary> Display guild roster. </summary>
