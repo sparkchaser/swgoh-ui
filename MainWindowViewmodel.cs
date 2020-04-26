@@ -181,6 +181,8 @@ namespace goh_ui
 
         private ProgramSettings settings;
 
+        private ProgramState state = ProgramState.UNKNOWN;
+
         /// <summary> Unprocessed player data as returned by the API.  Only use for serialization purposes. </summary>
         private List<PlayerInfo> rawPlayerInfo;
 
@@ -220,13 +222,66 @@ namespace goh_ui
             gameData = GameData.LoadOrCreate(GameDataFile);
             DebugMessage($"Game Data is {(gameData.HasData() ? "present" : "missing")}, {(gameData.IsOutdated() ? "outdated" : "up-to-date")}");
 
-            CurrentActivity = "No data available";
+            UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
 
             // Pull user settings from last time
             Username = settings.username;
             UserId = settings.userid;
             AllyCode = settings.allycode;
         }
+
+        #region Track and manage program state
+
+        /// <summary>
+        /// Description of the program's current state in the data loading process.
+        /// </summary>
+        private enum ProgramState
+        {
+            UNKNOWN = 0,
+            READY,
+            NO_DATA_AVAILABLE,
+            LOGGING_IN,
+            GETTING_GUILD_DATA,
+            GETTING_GUILD_MEMBER_DATA,
+            GETTING_PLAYER_DATA,
+            GETTING_MISC_DATA
+        }
+
+        /// <summary> Change the program's current state and update state-dependent values. </summary>
+        /// <param name="new_state">New program state.</param>
+        private void UpdateProgramState(ProgramState new_state)
+        {
+            switch(new_state)
+            {
+                case ProgramState.NO_DATA_AVAILABLE:
+                    CurrentActivity = "No data available";
+                    break;
+                case ProgramState.READY:
+                    CurrentActivity = "Ready";
+                    break;
+                case ProgramState.LOGGING_IN:
+                    CurrentActivity = "Logging in";
+                    break;
+                case ProgramState.GETTING_GUILD_DATA:
+                    CurrentActivity = "Fetching guild information";
+                    break;
+                case ProgramState.GETTING_GUILD_MEMBER_DATA:
+                    CurrentActivity = "Fetching member details";
+                    break;
+                case ProgramState.GETTING_PLAYER_DATA:
+                    CurrentActivity = "Fetching player details";
+                    break;
+                case ProgramState.GETTING_MISC_DATA:
+                    CurrentActivity = "Fetching game data";
+                    break;
+                default:
+                    new_state = ProgramState.UNKNOWN;
+                    break;
+            }
+            state = new_state;
+        }
+
+        #endregion
 
         /// <summary> Display an error message in a dialog box. </summary>
         /// <param name="message">Message to display.</param>
@@ -352,7 +407,7 @@ namespace goh_ui
                     PlayerName = me.Name;
             }
             LoggedIn = true;
-            CurrentActivity = "Ready";
+            UpdateProgramState(ProgramState.READY);
 
             // Build roster
             if (gameData.HasData())
@@ -366,25 +421,25 @@ namespace goh_ui
         private async void DoRefreshData()
         {
             DebugMessage("Game metadata update needed");
-            string old_status = CurrentActivity;
+            ProgramState old_status = state;
 
             // Log in, if we aren't already
             if (!api.IsLoggedIn)
             {
                 if (await DoLogin() == false)
                 {
-                    CurrentActivity = "No data available";
+                    UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                     return;
                 }
             }
 
             // Re-fetch data
-            CurrentActivity = "Fetching game data";
+            UpdateProgramState(ProgramState.GETTING_MISC_DATA);
             gameData = await UpdateGameData();
 
             if (!gameData.HasData() || gameData.IsOutdated())
             {
-                CurrentActivity = "No data available";
+                UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                 return;
             }
 
@@ -398,9 +453,9 @@ namespace goh_ui
             // Report status
             DebugMessage("Game data update complete");
             if (IsAllDataAvailable())
-                CurrentActivity = "Ready";
+                UpdateProgramState(ProgramState.READY);
             else
-                CurrentActivity = old_status;
+                UpdateProgramState(old_status);
         }
 
         /// <summary> Display guild roster. </summary>
@@ -467,7 +522,7 @@ namespace goh_ui
             settings.allycode = AllyCode;
             ProgramSettings.Store(settings, SettingsFile);
 
-            CurrentActivity = "Fetching guild information";
+            UpdateProgramState(ProgramState.GETTING_GUILD_DATA);
             GuildInfo resp = null;
             bool success = false;
 
@@ -496,7 +551,7 @@ namespace goh_ui
                     rawPlayerInfo = null;
                     PlayerName = "";
                     GuildName = "";
-                    CurrentActivity = "No data available";
+                    UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                     return;
                 }
                 guild = resp;
@@ -531,12 +586,12 @@ namespace goh_ui
                 if (!gameData.HasData() || gameData.IsOutdated())
                 {
                     DebugMessage("Game metadata update needed");
-                    CurrentActivity = "Fetching game data";
+                    UpdateProgramState(ProgramState.GETTING_MISC_DATA);
                     gameData = await UpdateGameData();
 
                     if (!gameData.HasData() || gameData.IsOutdated())
                     {
-                        CurrentActivity = "No data available";
+                        UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                         return;
                     }
 
@@ -548,13 +603,13 @@ namespace goh_ui
                 ComputeTruePower(rawPlayerInfo, gameData.RelicMultipliers);
                 BuildRoster(rawPlayerInfo, gameData.Titles);
 
-                CurrentActivity = "Ready";
+                UpdateProgramState(ProgramState.READY);
                 DebugMessage("Ready");
             }
             else
             {
                 // Player doesn't seem to be in a guild, try pulling individual player information
-                CurrentActivity = "Fetching player details";
+                UpdateProgramState(ProgramState.GETTING_PLAYER_DATA);
                 var codes = new List<AllyCode>() { api.AllyCode };
                 List<PlayerInfo> pinfo = null;
                 success = false;
@@ -607,7 +662,7 @@ namespace goh_ui
             }
 
             // Try to log in
-            CurrentActivity = "Logging in";
+            UpdateProgramState(ProgramState.LOGGING_IN);
             DebugMessage($"Log In: Start");
             var result = false;
             try
@@ -623,7 +678,7 @@ namespace goh_ui
             LoggedIn = result;
             if (!LoggedIn)
             {
-                CurrentActivity = "No data available";
+                UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                 return false;
             }
 
@@ -635,7 +690,7 @@ namespace goh_ui
         private async Task<List<PlayerInfo>> UpdatePlayerData(IEnumerable<AllyCode> codes)
         {
             // Fetch player info
-            CurrentActivity = "Fetching member details";
+            UpdateProgramState(ProgramState.GETTING_GUILD_MEMBER_DATA);
             DebugMessage($"Player Info: Start");
 
             ConcurrentBag<PlayerInfo> pinfo = new ConcurrentBag<PlayerInfo>();
@@ -682,7 +737,7 @@ namespace goh_ui
             // Update UI and VM with results
             if (pinfo.Count != codes.Count())
             {
-                CurrentActivity = "No data available";
+                UpdateProgramState(ProgramState.NO_DATA_AVAILABLE);
                 return null;
             }
 
