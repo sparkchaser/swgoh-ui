@@ -365,7 +365,7 @@ namespace goh_ui
         public static readonly string SET_OFFENSE     = "2";
         public static readonly string SET_DEFENSE     = "3";
         public static readonly string SET_SPEED       = "4";
-        public static readonly string SET_CRIT_CHANGE = "5";
+        public static readonly string SET_CRIT_CHANCE = "5";
         public static readonly string SET_CRIT_DAMAGE = "6";
         public static readonly string SET_POTENCY     = "7";
         public static readonly string SET_TENACITY    = "8";

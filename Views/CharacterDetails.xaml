@@ -50,6 +50,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -192,6 +193,17 @@
                Foreground="{Binding Path=GearLevelColor}"
                Visibility="{Binding Path=IsChar, Converter={StaticResource BoolVis}}"/>
 
+        <!-- Mod set bonuses -->
+        <StackPanel Grid.Row="6"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Orientation="Horizontal"
+                    Visibility="{Binding Path=IsChar, Converter={StaticResource BoolVis}}">
+            <Label Content="Mod bonuses:"/>
+            <Label Content="{Binding Path=ModSets}"
+                   Padding="0,5,5,5"/>
+        </StackPanel>
+        
         <!-- Tags/categories -->
         <!-- TBD -->
     </Grid>

@@ -67,7 +67,8 @@ namespace goh_ui.Viewmodels
         public bool Gearslot5Filled { get; private set; }
         public bool Gearslot6Filled { get; private set; }
 
-
+        /// <summary> Which mod sets this character is using (complete sets with bonus activated). </summary>
+        public string ModSets { get; private set; }
 
         #endregion
 
@@ -126,6 +127,40 @@ namespace goh_ui.Viewmodels
                     // 13 orange
                     GearLevelColor = new SolidColorBrush(Color.FromRgb(255, 64, 64));
                 }
+
+                // Compute which mod sets this character has bonuses for
+                List<string> sets = new List<string>();
+                // Look for 4-piece sets first
+                if (character.mods.Count(m => m.set == Mod.SET_CRIT_DAMAGE) >= 4)
+                    sets.Add("Crit Damage");
+                if (character.mods.Count(m => m.set == Mod.SET_OFFENSE) >= 4)
+                    sets.Add("Offense");
+                if (character.mods.Count(m => m.set == Mod.SET_SPEED) >= 4)
+                    sets.Add("Speed");
+                // Now look for 2-piece sets, taking into account multiple sets
+                int count = character.mods.Count(m => m.set == Mod.SET_HEALTH);
+                for (int i = 0; i < count / 2; i++)
+                    sets.Add("Health");
+                count = character.mods.Count(m => m.set == Mod.SET_DEFENSE);
+                for (int i = 0; i < count / 2; i++)
+                    sets.Add("Defense");
+                count = character.mods.Count(m => m.set == Mod.SET_CRIT_CHANCE);
+                for (int i = 0; i < count / 2; i++)
+                    sets.Add("Crit Chance");
+                count = character.mods.Count(m => m.set == Mod.SET_POTENCY);
+                for (int i = 0; i < count / 2; i++)
+                    sets.Add("Potency");
+                count = character.mods.Count(m => m.set == Mod.SET_TENACITY);
+                for (int i = 0; i < count / 2; i++)
+                    sets.Add("Tenacity");
+                // Build output string
+                if (sets.Any())
+                {
+                    sets.Sort();
+                    ModSets = string.Join(", ", sets);
+                }
+                else
+                    ModSets = "None";
             }
 
             // Build star level display string
@@ -165,7 +200,15 @@ namespace goh_ui.Viewmodels
                 },
                 skills = new Skill[] { },
                 crew = new Crew[] { },
-                mods = new Mod[] { }
+                mods = new Mod[]
+                {
+                    new Mod() { level = 15, pips = 5, slot = "1", set = "1" },
+                    new Mod() { level = 15, pips = 5, slot = "2", set = "1" },
+                    new Mod() { level = 15, pips = 5, slot = "3", set = "1" },
+                    new Mod() { level = 15, pips = 5, slot = "4", set = "1" },
+                    new Mod() { level = 15, pips = 5, slot = "5", set = "1" },
+                    new Mod() { level = 15, pips = 5, slot = "6", set = "1" }
+                }
             };
             PopulateFields();
         }
