@@ -56,6 +56,8 @@ namespace goh_ui.Viewmodels
             SelectedFilter = Filters.FirstOrDefault();
         }
 
+        /// <summary> View that owns this viewmodel. </summary>
+        public Window Parent { get; set; }
 
         /// <summary> Filtered list of units. </summary>
         public CollectionViewSource UnitSource { get; private set; }
@@ -207,7 +209,7 @@ namespace goh_ui.Viewmodels
         public decimal GearLevelSortable => _char.GearLevelSortable;
         public string GearLevelDescriptive => _char.GearLevelDescriptive;
 
-        private readonly Character _char;
+        public readonly Character _char;
 
         public UnitLookupResult(string name, Character character)
         {

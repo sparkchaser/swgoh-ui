@@ -4,7 +4,7 @@
                   xmlns:local="clr-namespace:goh_ui"
                   Title="Unit Lookup"
                   Height="400"
-                  Width="400">
+                  SizeToContent="Width">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -22,9 +22,13 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
         <!-- Unit selection -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Grid.Column="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -57,7 +61,7 @@
         </Grid>
 
         <!-- Results count -->
-        <StackPanel Orientation="Horizontal" Grid.Row="1">
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
             <StackPanel.Style>
                 <Style TargetType="{x:Type StackPanel}">
                     <Style.Triggers>
@@ -72,13 +76,14 @@
         </StackPanel>
         
         <!-- Results table -->
-        <ListView Grid.Row="2"
+        <ListView Grid.Row="2" Grid.Column="0"
                   Margin="5"
                   ItemsSource="{Binding Path=ResultsList}"
                   ScrollViewer.VerticalScrollBarVisibility="Auto"
                   ScrollViewer.CanContentScroll="True"
                   local:GridViewSort.AutoSort="True"
-                  ItemContainerStyle="{StaticResource StretchColumn}">
+                  ItemContainerStyle="{StaticResource StretchColumn}"
+                  SelectionChanged="ListView_SelectionChanged">
             <ListView.Resources>
                 <DataTemplate x:Key="Level">
                     <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Level}"/>
@@ -116,5 +121,11 @@
             </ListView.View>
 
         </ListView>
+        
+        <!-- Unit details view -->
+        <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
+                x:Name="DetailsPanel"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"/>
     </Grid>
 </local:ToolWindow>

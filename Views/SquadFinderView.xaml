@@ -5,16 +5,11 @@
                   xmlns:views="clr-namespace:goh_ui.Views"
                   Title="Squad Lookup"
                   Height="400"
-                  Width="600"
-                  x:Name="toplevel">
+                  MinWidth="600"
+                  SizeToContent="Width">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Styles.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-
             <BooleanToVisibilityConverter x:Key="BoolVis"/>
-            <local:FormattedNumberConverter x:Key="Fmt"/>
         </ResourceDictionary>
     </Window.Resources>
     
@@ -25,10 +20,16 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
         
         <!-- Menu bar -->
         <Menu IsMainMenu="True"
               Grid.Row="0"
+              Grid.Column="0"
+              Grid.ColumnSpan="2"
               IsEnabled="{Binding Path=ShowPresets}"
               Visibility="{Binding Path=ShowPresets, Converter={StaticResource BoolVis}}">
             <MenuItem Header="_Presets" x:Name="PresetsMenu" ItemsSource="{Binding Path=PresetsList}">
@@ -43,7 +44,7 @@
         </Menu>
         
         <!-- Squad selection -->
-        <StackPanel Grid.Row="1" Orientation="Vertical">
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Vertical">
             <Label Content="Select Squad"/>
             <Grid Grid.IsSharedSizeScope="True">
                 <Grid.Resources>
@@ -107,64 +108,42 @@
         </StackPanel>
 
         <!-- Results view -->
-        <ListView Grid.Row="2"
+        <DataGrid Grid.Row="2"
+                  Grid.Column="0"
+                  x:Name="ResultsGrid"
                   Margin="5"
                   ItemsSource="{Binding Path=SearchResults}"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  ScrollViewer.CanContentScroll="True"
-                  local:GridViewSort.AutoSort="True"
-                  ItemContainerStyle="{StaticResource StretchColumn}">
-            <ListView.Resources>
-                <DataTemplate x:Key="TotalPower">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=TotalPower, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-                <DataTemplate x:Key="PUnit1">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit1.Power, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-                <DataTemplate x:Key="PUnit2">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit2.Power, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-                <DataTemplate x:Key="PUnit3">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit3.Power, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-                <DataTemplate x:Key="PUnit4">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit4.Power, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-                <DataTemplate x:Key="PUnit5">
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Unit5.Power, Converter={StaticResource Fmt}}"/>
-                </DataTemplate>
-            </ListView.Resources>
-
-            <ListView.View>
-                <GridView AllowsColumnReorder="True">
-                    <GridViewColumn Header="Player"
+                  CurrentCellChanged="DataGrid_SelectionChanged"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  CanUserReorderColumns="False"
+                  CanUserDeleteRows="False"
+                  CanUserAddRows="False"
+                  GridLinesVisibility="None"
+                  SelectionUnit="Cell"
+                  SelectionMode="Single"
+                  RowHeaderWidth="0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Player"
                                     Width="160"
-                                    DisplayMemberBinding="{Binding Path=Player}"
-                                    local:GridViewSort.PropertyName="Player"/>
-                    <GridViewColumn Header="Total Power"
-                                    CellTemplate="{StaticResource TotalPower}"
-                                    local:GridViewSort.PropertyName="TotalPower"/>
-                    <GridViewColumn Header="Leader"
-                                    CellTemplate="{StaticResource PUnit1}"
-                                    local:GridViewSort.PropertyName="Unit1.Power"/>
-                    <GridViewColumn Header="Unit 2"
-                                    CellTemplate="{StaticResource PUnit2}"
-                                    local:GridViewSort.PropertyName="Unit2.Power"/>
-                    <GridViewColumn Header="Unit 3"
-                                    CellTemplate="{StaticResource PUnit3}"
-                                    local:GridViewSort.PropertyName="Unit3.Power"/>
-                    <GridViewColumn Header="Unit 4"
-                                    CellTemplate="{StaticResource PUnit4}"
-                                    local:GridViewSort.PropertyName="Unit4.Power"/>
-                    <GridViewColumn Header="Unit 5"
-                                    CellTemplate="{StaticResource PUnit5}"
-                                    local:GridViewSort.PropertyName="Unit5.Power"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
-        
+                                    Binding="{Binding Path=Player}"/>
+                <DataGridTextColumn Header="Total Power"
+                                    Binding="{Binding Path=TotalPower, StringFormat=\{0:N0\}}"/>
+                <DataGridTextColumn Header="Leader"
+                                    Binding="{Binding Path=Unit1.TruePower, StringFormat=\{0:N0\}}"/>
+                <DataGridTextColumn Header="Unit 2"
+                                    Binding="{Binding Path=Unit2.TruePower, StringFormat=\{0:N0\}}"/>
+                <DataGridTextColumn Header="Unit 3"
+                                    Binding="{Binding Path=Unit3.TruePower, StringFormat=\{0:N0\}}"/>
+                <DataGridTextColumn Header="Unit 4"
+                                    Binding="{Binding Path=Unit4.TruePower, StringFormat=\{0:N0\}}"/>
+                <DataGridTextColumn Header="Unit 5"
+                                    Binding="{Binding Path=Unit5.TruePower, StringFormat=\{0:N0\}}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
         <!-- Result count display -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal">
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
             <StackPanel.Style>
                 <Style TargetType="{x:Type StackPanel}">
                     <Style.Triggers>
@@ -178,5 +157,11 @@
             <Label Content="{Binding Path=ResultCount}"/>
             <Label Content="matching squads"/>
         </StackPanel>
+        
+        <!-- Unit details view -->
+        <Border Grid.Row="1" Grid.Column="1" Grid.RowSpan="3"
+                x:Name="DetailsPanel"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"/>
     </Grid>
 </local:ToolWindow>

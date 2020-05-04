@@ -4,7 +4,8 @@
                   xmlns:local="clr-namespace:goh_ui"
                   Title="{Binding Path=WindowTitle}"
                   Height="375"
-                  Width="475">
+                  MinWidth="475"
+                  SizeToContent="Width">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -29,7 +30,8 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <TabControl Grid.Row="0" TabStripPlacement="Left">
+    <TabControl Grid.Row="0" TabStripPlacement="Left"
+                SelectionChanged="TabControl_SelectionChanged">
         <TabControl.Resources>
             <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource RotatedTabs}"/>
         </TabControl.Resources>
@@ -131,70 +133,104 @@
 
         <!-- Character roster -->
         <TabItem Header="Characters">
-            <ListView Margin="5"
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Results table -->
+                <ListView Grid.Column="0"
+                          x:Name="CharacterTable"
+                          Margin="5"
                           ItemsSource="{Binding Path=Characters}"
                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                           ScrollViewer.CanContentScroll="True"
                           local:GridViewSort.AutoSort="True"
-                          ItemContainerStyle="{StaticResource StretchColumn}">
+                          ItemContainerStyle="{StaticResource StretchColumn}"
+                          SelectionChanged="ListView_SelectionChangedChar">
 
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Name"
-                                            Width="180"
-                                            DisplayMemberBinding="{Binding Path=name}"
-                                            local:GridViewSort.PropertyName="name"/>
-                        <GridViewColumn Header="Level"
-                                            Width="30"
-                                            CellTemplate="{StaticResource Level}"
-                                            local:GridViewSort.PropertyName="level"/>
-                        <GridViewColumn Header="Stars"
-                                            Width="30"
-                                            CellTemplate="{StaticResource Stars}"
-                                            local:GridViewSort.PropertyName="rarity"/>
-                        <GridViewColumn Header="Gear Level"
-                                            Width="60"
-                                            CellTemplate="{StaticResource Gear}"
-                                            local:GridViewSort.PropertyName="GearLevelSortable"/>
-                        <GridViewColumn Header="Power"
-                                            Width="60"
-                                            CellTemplate="{StaticResource Power}"
-                                            local:GridViewSort.PropertyName="TruePower"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name"
+                                                Width="180"
+                                                DisplayMemberBinding="{Binding Path=name}"
+                                                local:GridViewSort.PropertyName="name"/>
+                            <GridViewColumn Header="Level"
+                                                Width="30"
+                                                CellTemplate="{StaticResource Level}"
+                                                local:GridViewSort.PropertyName="level"/>
+                            <GridViewColumn Header="Stars"
+                                                Width="30"
+                                                CellTemplate="{StaticResource Stars}"
+                                                local:GridViewSort.PropertyName="rarity"/>
+                            <GridViewColumn Header="Gear Level"
+                                                Width="60"
+                                                CellTemplate="{StaticResource Gear}"
+                                                local:GridViewSort.PropertyName="GearLevelSortable"/>
+                            <GridViewColumn Header="Power"
+                                                Width="60"
+                                                CellTemplate="{StaticResource Power}"
+                                                local:GridViewSort.PropertyName="TruePower"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                
+                <!-- Unit details view -->
+                <Border Grid.Column="1"
+                        x:Name="CharDetailsPanel"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+            </Grid>
         </TabItem>
 
         <!-- Ship roster -->
         <TabItem Header="Ships">
-            <ListView Margin="5"
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Results table -->
+                <ListView Grid.Column="0"
+                          x:Name="ShipTable"
+                          Margin="5"
                           ItemsSource="{Binding Path=Ships}"
                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                           ScrollViewer.CanContentScroll="True"
                           local:GridViewSort.AutoSort="True"
-                          ItemContainerStyle="{StaticResource StretchColumn}">
+                          ItemContainerStyle="{StaticResource StretchColumn}"
+                          SelectionChanged="ListView_SelectionChangedShip">
 
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Name"
-                                            Width="180"
-                                            DisplayMemberBinding="{Binding Path=name}"
-                                            local:GridViewSort.PropertyName="name"/>
-                        <GridViewColumn Header="Level"
-                                            Width="30"
-                                            CellTemplate="{StaticResource Level}"
-                                            local:GridViewSort.PropertyName="level"/>
-                        <GridViewColumn Header="Stars"
-                                            Width="30"
-                                            CellTemplate="{StaticResource Stars}"
-                                            local:GridViewSort.PropertyName="rarity"/>
-                        <GridViewColumn Header="Power"
-                                            Width="60"
-                                            CellTemplate="{StaticResource Power}"
-                                            local:GridViewSort.PropertyName="TruePower"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name"
+                                                Width="180"
+                                                DisplayMemberBinding="{Binding Path=name}"
+                                                local:GridViewSort.PropertyName="name"/>
+                            <GridViewColumn Header="Level"
+                                                Width="30"
+                                                CellTemplate="{StaticResource Level}"
+                                                local:GridViewSort.PropertyName="level"/>
+                            <GridViewColumn Header="Stars"
+                                                Width="30"
+                                                CellTemplate="{StaticResource Stars}"
+                                                local:GridViewSort.PropertyName="rarity"/>
+                            <GridViewColumn Header="Power"
+                                                Width="60"
+                                                CellTemplate="{StaticResource Power}"
+                                                local:GridViewSort.PropertyName="TruePower"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <!-- Unit details view -->
+                <Border Grid.Column="1"
+                        x:Name="ShipDetailsPanel"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+            </Grid>
         </TabItem>
 
         <!-- Zeta list -->

@@ -387,42 +387,22 @@ namespace goh_ui.Viewmodels
         public string Player { get; set; }
         /// <summary> Total squad power. </summary>
         public long TotalPower { get; set; }
-        public SquadLookupUnit Unit1 { get; set; }
-        public SquadLookupUnit Unit2 { get; set; }
-        public SquadLookupUnit Unit3 { get; set; }
-        public SquadLookupUnit Unit4 { get; set; }
-        public SquadLookupUnit Unit5 { get; set; }
+        public Character Unit1 { get; set; }
+        public Character Unit2 { get; set; }
+        public Character Unit3 { get; set; }
+        public Character Unit4 { get; set; }
+        public Character Unit5 { get; set; }
 
         public SquadLookupResult() { }
         public SquadLookupResult(Character c1, Character c2, Character c3, Character c4, Character c5)
         {
-            Unit1 = new SquadLookupUnit(c1);
-            Unit2 = new SquadLookupUnit(c2);
-            Unit3 = new SquadLookupUnit(c3);
-            Unit4 = new SquadLookupUnit(c4);
-            Unit5 = new SquadLookupUnit(c5);
+            Unit1 = c1;
+            Unit2 = c2;
+            Unit3 = c3;
+            Unit4 = c4;
+            Unit5 = c5;
 
-            TotalPower = Unit1.Power + Unit2.Power + Unit3.Power + Unit4.Power + Unit5.Power;
-        }
-    }
-
-    /// <summary>
-    /// Stats for a single unit in a squad.
-    /// </summary>
-    public class SquadLookupUnit
-    {
-        public int Level { get; set; }
-        public int Stars { get; set; }
-        public int GearLevel { get; set; }
-        public long Power { get; set; }
-
-        public SquadLookupUnit() { }
-        public SquadLookupUnit(Character c)
-        {
-            Level = c.level;
-            GearLevel = c.gear;
-            Stars = c.rarity;
-            Power = c.TruePower;
+            TotalPower = Unit1.TruePower + Unit2.TruePower + Unit3.TruePower + Unit4.TruePower + Unit5.TruePower;
         }
     }
 
