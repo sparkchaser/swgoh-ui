@@ -172,6 +172,7 @@ namespace goh_ui
         public SimpleCommand RosterCommand { get; private set; }
         public SimpleCommand WhoHasCommand { get; private set; }
         public SimpleCommand SquadCheckerCommand { get; private set; }
+        public SimpleCommand ZetasCommand { get; private set; }
         public SimpleCommand ShowAbout { get; private set; }
 
         #endregion
@@ -226,6 +227,7 @@ namespace goh_ui
             RosterCommand = new SimpleCommand(DoRoster);
             WhoHasCommand = new SimpleCommand(DoWhoHas);
             SquadCheckerCommand = new SimpleCommand(DoSquadChecker);
+            ZetasCommand = new SimpleCommand(DoZetas);
             ShowAbout = new SimpleCommand(() => AboutWindow.Display(this.parent));
 
             api = new ApiWrapper();
@@ -522,6 +524,19 @@ namespace goh_ui
 
             var vm = new SquadFinderViewmodel(Members, gameData.Units);
             var view = new SquadFinderView(vm) { Owner = parent };
+            view.ShowDialog();
+        }
+
+        /// <summary> Display zeta recommendations. </summary>
+        private void DoZetas()
+        {
+            if (gameData == null || gameData.Zetas == null)
+            {
+                ShowError("Game data has not yet been successfully retrieved.");
+                return;
+            }
+
+            var view = new ZetaListView(gameData.Zetas) { Owner = parent };
             view.ShowDialog();
         }
 
@@ -838,12 +853,35 @@ namespace goh_ui
                 data.Units = task.Result;
             });
 
+            // Build task to fetch zeta recommendations
+            var zeta_task = api.GetZetaHints();
+            var zt = zeta_task.ContinueWith((task) =>
+            {
+                DebugMessage($"Zeta Data: End");
+                if (task.IsFaulted)
+                {
+                    task.Exception.Handle(e =>
+                    {
+                        if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                            ShowError($"Error deserializing JSON:\n{e.Message}");
+                        else
+                            ShowError($"Error fetching zeta hints:\n{e.Message}");
+                        return true;
+                    });
+
+                    return;
+                }
+
+                data.Zetas = task.Result;
+            });
+
+
             // Run tasks in parallel and wait for them to complete
             DebugMessage($"Game Data: Start");
             try
             {
-                await Task.WhenAll(new Task[] { title_task, relic_task, units_task });
-                await Task.WhenAll(new Task[] { tt, rt, ut });
+                await Task.WhenAll(new Task[] { title_task, relic_task, units_task, zeta_task });
+                await Task.WhenAll(new Task[] { tt, rt, ut, zt });
             }
             catch (Exception e)
             {
@@ -885,6 +923,9 @@ namespace goh_ui
         /// <param name="titles"> (Optional) Metadata for decoding player titles. </param>
         private void BuildRoster(List<PlayerInfo> guild_roster, IEnumerable<TitleInfo> titles)
         {
+            if (guild_roster == null)
+                return;
+
             Members.Clear();
             foreach (var player in guild_roster)
             {

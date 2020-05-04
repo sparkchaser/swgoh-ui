@@ -59,6 +59,11 @@
                           ToolTip="Find all guild members who have a particular squad"
                           Command="{Binding Path=SquadCheckerCommand}"
                           IsEnabled="{Binding Path=UnlockTools}"/>
+                <Separator/>
+                <MenuItem Header="_Zeta Rankings"
+                          ToolTip="Find the best zetas for each game mode."
+                          Command="{Binding Path=ZetasCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
             </MenuItem>
 
             <MenuItem Header="_About"

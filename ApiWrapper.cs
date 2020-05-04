@@ -41,6 +41,7 @@ namespace goh_ui
         private static readonly string URL_PLAYER = "swgoh/players";
         private static readonly string URL_GUILDS = "swgoh/guilds";
         private static readonly string URL_DATA = "swgoh/data";
+        private static readonly string URL_ZETA = "swgoh/zetas";
 
         #endregion
 
@@ -458,6 +459,40 @@ namespace goh_ui
             { "gac_trench", "Trench Run" }
         };
 
+        /// <summary> Fetch a list of zeta abilities, ranked by usefulness. </summary>
+        public async Task<ZetaStats[]> GetZetaHints()
+        {
+            Stream resp;
+            try
+            {
+                var payload = new ZetaRecommendationsCommand();
+                payload.project = new Dictionary<string, object>()
+                {
+                    { "zetas", 1 }
+                };
+                resp = await MakeApiRequest(payload, URL_ZETA);
+            }
+            catch (ApiErrorException e)
+            {
+                DisplayError(e.Response == null ? e.Message : e.Response.ReasonPhrase, "Zeta Info");
+                return new ZetaStats[0];
+            }
+
+            ZetaRecommendations retval;
+            using (StreamReader sr = new StreamReader(resp))
+            using (JsonReader js = new JsonTextReader(sr))
+            {
+                JsonSerializer ser = new JsonSerializer();
+                retval = ser.Deserialize<ZetaRecommendations>(js);
+            }
+            resp.Dispose();
+
+            if (retval == null || retval.zetas.Length == 0)
+            {
+                return new ZetaStats[0];
+            }
+            return retval.zetas;
+        }
 
         /// <summary> POST a request to the web API and return the result as a stream. </summary>
         /// <param name="payload">Command payload (will be serialized to JSON).</param>

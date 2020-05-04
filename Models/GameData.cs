@@ -21,6 +21,9 @@ namespace goh_ui.Models
         /// <summary> Power multipliers for units with relics. </summary>
         public int[] RelicMultipliers { get; set; } = null;
 
+        /// <summary> Zeta ability rankings and recommendations. </summary>
+        public ZetaStats[] Zetas { get; set; } = null;
+
 
         /// <summary> Indicates whether or not this object has been fully populated with data. </summary>
         public bool HasData()

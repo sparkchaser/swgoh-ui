@@ -582,6 +582,46 @@ namespace goh_ui
 
     #endregion
 
+    #region Data from the 'Get Zeta Info' command
+
+    /// <summary>
+    /// List of zeta recommendations.
+    /// </summary>
+    public class ZetaRecommendations
+    {
+        public ZetaStats[] zetas { get; set; }
+    }
+
+    /// <summary>
+    /// Information about a specific zeta ability.
+    /// </summary>
+    /// <remarks> For numerical ratings, 1 is best and 10 is worst. </remarks>
+    public class ZetaStats
+    {
+        /// <summary> Name of the ability. </summary>
+        public string name { get; set; }
+        /// <summary> Type of ability (unique, leader, etc). </summary>
+        public string type { get; set; }
+        /// <summary> Character associated with this ability. </summary>
+        public string toon { get; set; }
+        /// <summary> Usefulness of this zeta in PVP (1-10). </summary>
+        public double pvp { get; set; }
+        /// <summary> Usefulness of this zeta in Territory War (1-10). </summary>
+        public double tw { get; set; }
+        /// <summary> Usefulness of this zeta in Geonosis Territory Battle (1-10). </summary>
+        public double tb { get; set; }
+        /// <summary> Usefulness of this zeta in the Rancor raid [heroic] (1-10). </summary>
+        public double pit { get; set; }
+        /// <summary> Usefulness of this zeta in the AAT raid [heroic] (1-10). </summary>
+        public double tank { get; set; }
+        /// <summary> Usefulness of this zeta in the Sith Triumverate raid [heroic] (1-10). </summary>
+        public double sith { get; set; }
+        /// <summary> Usefulness of this zeta across the entire game (1-10). </summary>
+        public double versa { get; set; }
+    }
+
+    #endregion
+
     #region Command payloads
 
     /// <summary>
@@ -629,6 +669,16 @@ namespace goh_ui
         /// </remarks>
         public Dictionary<string, object> match { get; set; } = null;
 
+        /// <summary> (Optional) Alter the returned data's format by cherry-picking fields or generating computed fields. </summary>
+        /// <remarks> This is directly passed to the 'project' operator in MongoDB. See the MongoDB docs for details. </remarks>
+        public Dictionary<string, object> project { get; set; } = null;
+    }
+
+    /// <summary>
+    /// Command to fetch list of zeta recommendations.
+    /// </summary>
+    public class ZetaRecommendationsCommand
+    {
         /// <summary> (Optional) Alter the returned data's format by cherry-picking fields or generating computed fields. </summary>
         /// <remarks> This is directly passed to the 'project' operator in MongoDB. See the MongoDB docs for details. </remarks>
         public Dictionary<string, object> project { get; set; } = null;

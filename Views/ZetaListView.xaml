@@ -1,0 +1,65 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.ZetaListView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:local="clr-namespace:goh_ui"
+                  Title="Zeta Rankings"
+                  Height="400"
+                  SizeToContent="Width">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Label Content="Zeta Ability Rankings (1 - best, 10 - worst)" Grid.Row="0"/>
+
+        <ListView Grid.Row="1"
+                  Margin="5"
+                  ItemsSource="{Binding Path=Zetas}"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="True"
+                  local:GridViewSort.AutoSort="True">
+            <ListView.View>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn Header="Character"
+                                    Width="180"
+                                    DisplayMemberBinding="{Binding Path=toon}"
+                                    local:GridViewSort.PropertyName="toon"/>
+                    <GridViewColumn Header="Ability"
+                                    Width="230"
+                                    DisplayMemberBinding="{Binding Path=name}"
+                                    local:GridViewSort.PropertyName="name"/>
+                    <GridViewColumn Header="Overall"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=versa}"
+                                    local:GridViewSort.PropertyName="versa">
+                    </GridViewColumn>
+                    <GridViewColumn Header="PVP"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=pvp}"
+                                    local:GridViewSort.PropertyName="pvp"/>
+                    <GridViewColumn Header="Geo TB"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=tb}"
+                                    local:GridViewSort.PropertyName="tb"/>
+                    <GridViewColumn Header="TW"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=tw}"
+                                    local:GridViewSort.PropertyName="tw"/>
+                    <GridViewColumn Header="Pit"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=pit}"
+                                    local:GridViewSort.PropertyName="pit"/>
+                    <GridViewColumn Header="Tank"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=tank}"
+                                    local:GridViewSort.PropertyName="tank"/>
+                    <GridViewColumn Header="Sith"
+                                    Width="50"
+                                    DisplayMemberBinding="{Binding Path=sith}"
+                                    local:GridViewSort.PropertyName="sith"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</local:ToolWindow>
