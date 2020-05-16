@@ -45,11 +45,11 @@ namespace goh_ui.Viewmodels
         /// <summary> Whether the "fetch" button should be clickable. </summary>
         public bool ButtonsEnabled
         {
-            get { return (bool)GetValue(FetchButtonEnabledProperty); }
-            set { SetValue(FetchButtonEnabledProperty, value); }
+            get { return (bool)GetValue(ButtonsEnabledProperty); }
+            set { SetValue(ButtonsEnabledProperty, value); }
         }
-        public static readonly DependencyProperty FetchButtonEnabledProperty =
-            DependencyProperty.Register("FetchButtonEnabled", typeof(bool), typeof(AllianceViewModel), new PropertyMetadata(true));
+        public static readonly DependencyProperty ButtonsEnabledProperty =
+            DependencyProperty.Register("ButtonsEnabled", typeof(bool), typeof(AllianceViewModel), new PropertyMetadata(true));
 
         #endregion
 
