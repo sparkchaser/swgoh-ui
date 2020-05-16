@@ -15,6 +15,8 @@ namespace goh_ui.Models
         public string userid { get; set; } = "";
         public string allycode { get; set; } = "";
 
+        public uint[] alliance { get; set; } = { };
+
         #region Object serialization
 
         /// <summary> Load settings from disk if it present. </summary>

@@ -60,6 +60,11 @@
                           Command="{Binding Path=SquadCheckerCommand}"
                           IsEnabled="{Binding Path=UnlockTools}"/>
                 <Separator/>
+                <MenuItem Header="Guild _Alliance Report"
+                          ToolTip="Generate a summary for the guilds in an alliance."
+                          Command="{Binding Path=AllianceCommand}"
+                          IsEnabled="{Binding Path=LoggedIn}"/>
+                <Separator/>
                 <MenuItem Header="_Zeta Rankings"
                           ToolTip="Find the best zetas for each game mode."
                           Command="{Binding Path=ZetasCommand}"

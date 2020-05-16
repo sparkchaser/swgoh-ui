@@ -160,10 +160,19 @@ namespace goh_ui
         /// <param name="code">Ally code of someone in the guild.</param>
         public async Task<GuildInfo> GetGuildInfo(AllyCode code)
         {
+            GuildInfo[] retval;
+            retval = await GetGuildInfo(new AllyCode[] { code });
+            return retval?[0];
+        }
+
+        /// <summary> Fetch information about multiple guilds. </summary>
+        /// <param name="codes">Ally code of someone in the guild.</param>
+        public async Task<GuildInfo[]> GetGuildInfo(IEnumerable<AllyCode> codes)
+        {
             Stream resp;
             try
             {
-                resp = await MakeApiRequest(new PlayerGuildInfoCommand() { allycodes = new string[] { code.Value.ToString() } }, URL_GUILDS);
+                resp = await MakeApiRequest(new PlayerGuildInfoCommand() { allycodes = codes.Select(x => x.Value.ToString()).ToArray() }, URL_GUILDS);
             }
             catch (ApiErrorException e)
             {
@@ -180,13 +189,13 @@ namespace goh_ui
                 retval = ser.Deserialize<GuildInfo[]>(js);
             }
             resp.Dispose();
-            
+
             if (retval == null || retval.Length == 0)
             {
                 return null;
             }
 
-            return retval[0];
+            return retval;
         }
 
         /// <summary> Fetch information about a player. </summary>

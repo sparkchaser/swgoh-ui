@@ -172,6 +172,7 @@ namespace goh_ui
         public SimpleCommand RosterCommand { get; private set; }
         public SimpleCommand WhoHasCommand { get; private set; }
         public SimpleCommand SquadCheckerCommand { get; private set; }
+        public SimpleCommand AllianceCommand { get; private set; }
         public SimpleCommand ZetasCommand { get; private set; }
         public SimpleCommand ShowAbout { get; private set; }
 
@@ -227,6 +228,7 @@ namespace goh_ui
             RosterCommand = new SimpleCommand(DoRoster);
             WhoHasCommand = new SimpleCommand(DoWhoHas);
             SquadCheckerCommand = new SimpleCommand(DoSquadChecker);
+            AllianceCommand = new SimpleCommand(DoAllianceReport);
             ZetasCommand = new SimpleCommand(DoZetas);
             ShowAbout = new SimpleCommand(() => AboutWindow.Display(this.parent));
 
@@ -525,6 +527,27 @@ namespace goh_ui
             var vm = new SquadFinderViewmodel(Members, gameData.Units);
             var view = new SquadFinderView(vm) { Owner = parent };
             view.ShowDialog();
+        }
+
+        /// <summary> Summary overview for an alliance of guilds. </summary>
+        private void DoAllianceReport()
+        {
+            if (!api.IsLoggedIn)
+            {
+                ShowError("You must successfully connect to the web service before using this tool.");
+                return;
+            }
+
+            var view = new AllianceView(api)
+            {
+                Owner = parent
+            };
+            view.AllyCodeList = settings.alliance.Select(x => new AllyCode(x)).ToList();
+            view.ShowDialog();
+
+            var vm = view.DataContext as AllianceViewModel;
+            settings.alliance = vm.AllyCodes.Select(x => x.Value).ToArray();
+            ProgramSettings.Store(settings, SettingsFile);
         }
 
         /// <summary> Display zeta recommendations. </summary>

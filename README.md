@@ -66,6 +66,21 @@ followed by the full names (as they appear in-game) of the characters in the
 squad.  Squads listed in this file will appear in the "Presets" menu of the
 Squad Checker tool.
 
+### Alliance Overview
+
+This tool provides an automated way to fetch basic summary data about the
+various guilds in a multi-guild alliance.  Ally codes for one player from each
+guild are required.  The list of ally codes will be remembered between sessions.
+
+### Zeta Rankings
+
+This tool displays a ranked list of zeta abilities.  Abilites have separate
+rankings based on their usefulness in different aspects of the game.
+
+Note: Ranking data is manually curated based on the opinions and selections of
+a select group of top-tier players.  The manual nature of this data means that
+it will typically not include recently-released characters.
+
 
 ## Misc. Notes
 
