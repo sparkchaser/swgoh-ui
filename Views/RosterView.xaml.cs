@@ -13,6 +13,7 @@ namespace goh_ui.Views
         public RosterView(RosterViewmodel vm)
         {
             DataContext = vm ?? throw new ArgumentNullException("vm");
+            vm.Owner = this;
             this.vm = vm;
 
             InitializeComponent();

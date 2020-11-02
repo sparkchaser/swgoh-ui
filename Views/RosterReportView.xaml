@@ -1,0 +1,110 @@
+﻿<local:ToolWindow x:Class="goh_ui.Views.RosterReportView"
+                  xmlns:local="clr-namespace:goh_ui"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  Title="Generate Roster Report"
+                  SizeToContent="WidthAndHeight">
+    <StackPanel Orientation="Vertical" Margin="3">
+        <StackPanel.Resources>
+            <Style TargetType="{x:Type Button}">
+                <Setter Property="Height" Value="24"/>
+            </Style>
+        </StackPanel.Resources>
+
+        <GroupBox Header="Filters"
+                  Margin="5">
+            <Grid Margin="5">
+                <Grid.Resources>
+                    <Style x:Key="LeftColumn" TargetType="{x:Type Control}">
+                        <Setter Property="Grid.Column" Value="0"/>
+                        <Setter Property="Margin" Value="0,3,15,3"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                    <Style x:Key="RightColumn" TargetType="{x:Type Control}">
+                        <Setter Property="Grid.Column" Value="1"/>
+                        <Setter Property="Margin" Value="3,2,0,2"/>
+                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                </Grid.Resources>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <CheckBox Grid.Row="0"
+                          Style="{StaticResource LeftColumn}"
+                          Content="Minimum star level"
+                          IsChecked="{Binding Path=StarLevelSelected}"/>
+                <CheckBox Grid.Row="1"
+                          Style="{StaticResource LeftColumn}"
+                          Content="Minimum gear level"
+                          IsChecked="{Binding Path=GearLevelSelected}"/>
+                <CheckBox Grid.Row="2"
+                          Style="{StaticResource LeftColumn}"
+                          Content="Minimum character power"
+                          IsChecked="{Binding Path=CharPowerSelected}"/>
+                <CheckBox Grid.Row="3"
+                          Style="{StaticResource LeftColumn}"
+                          Content="Minimum squad power"
+                          IsChecked="{Binding Path=TeamPowerSelected}"/>
+
+                <ComboBox Grid.Row="0"
+                          Style="{StaticResource RightColumn}"
+                          Width="50"
+                          IsEnabled="{Binding Path=StarLevelSelected}"
+                          ItemsSource="{Binding Path=StarLevels}"
+                          SelectedValue="{Binding Path=SelectedStarLevel}"/>
+                <ComboBox Grid.Row="1"
+                          Style="{StaticResource RightColumn}"
+                          Width="50"
+                          IsEnabled="{Binding Path=GearLevelSelected}"
+                          ItemsSource="{Binding Path=GearLevels}"
+                          SelectedValue="{Binding Path=SelectedGearLevel}"/>
+                <TextBox Grid.Row="2"
+                         Style="{StaticResource RightColumn}"
+                         Text="{Binding Path=CharPower}"
+                         Width="75"
+                         IsEnabled="{Binding Path=CharPowerSelected}"/>
+                <TextBox Grid.Row="3"
+                         Style="{StaticResource RightColumn}"
+                         Text="{Binding Path=TeamPower}"
+                         Width="75"
+                         IsEnabled="{Binding Path=TeamPowerSelected}"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="Output Location"
+                  Margin="5">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Margin="5,0"
+                         Text="{Binding Path=OutputPath}"/>
+
+                <Button Grid.Column="1"
+                        Margin="5,0"
+                        Padding="5,0"
+                        MinWidth="50"
+                        Content="Browse"
+                        Command="{Binding Path=DoBrowse}"/>
+            </Grid>
+        </GroupBox>
+
+        <Button Content="Save" Command="{Binding Path=GenerateReport}" Margin="5"/>
+
+    </StackPanel>
+</local:ToolWindow>

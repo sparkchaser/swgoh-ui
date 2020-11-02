@@ -48,6 +48,19 @@ Power and other selected stats.  Sort the chart by clicking on a column header.
 Double-clicking on a player name will show detailed information about that
 player.
 
+The guild roster overview can be exported to a .csv file by clicking the
+'export' button above the table.  This can be useful for tracking guild members'
+progress over time.
+
+The "Roster Report" button will generate a .csv file listing every guild member
+that has certain squads.  The squads that are checked for are the squads listed
+in the "presets.csv" file (see the "Squad Checker" section for details).  The
+user will be prompted with additional filtering options, like specifying a
+minimum gear level or character power.  When a player has a squad that meets
+the specified criteria, the corresponding entry in the report will list that
+squad's total power.  A blank entry indicates that the criteria were not met
+or that the player does not have all of that squad's characters unlocked.
+
 ### Who Has
 
 This tool enables you see who in the guild has a certain character.  Select a
@@ -64,7 +77,7 @@ To make squad selection easier, create preset squads.  Presets are defined in
 the "presets.csv" file.  The first entry on each line is a name for the squad,
 followed by the full names (as they appear in-game) of the characters in the
 squad.  Squads listed in this file will appear in the "Presets" menu of the
-Squad Checker tool.
+Squad Checker tool and will be used when generating a Roster Report.
 
 ### Alliance Overview
 

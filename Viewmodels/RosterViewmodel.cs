@@ -2,6 +2,7 @@
 using goh_ui.Views;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 
@@ -9,15 +10,18 @@ namespace goh_ui.Viewmodels
 {
     public class RosterViewmodel : DependencyObject
     {
+        private IEnumerable<UnitDetails> units;
 
-        public RosterViewmodel(GuildInfo guild, PlayerList members)
+        public RosterViewmodel(GuildInfo guild, PlayerList members, IEnumerable<UnitDetails> unitDetails)
         {
             Guild = guild ?? throw new ArgumentNullException("guild");
             Members = members ?? throw new ArgumentNullException("members");
 
             GuildName = Guild.name;
+            units = unitDetails;
 
             Export = new SimpleCommand(ExportTable);
+            GenerateReport = new SimpleCommand(() => DoReport(Owner));
         }
 
 
@@ -32,9 +36,14 @@ namespace goh_ui.Viewmodels
         /// <summary> Guild metadata. </summary>
         public GuildInfo Guild { get; private set; }
 
+        /// <summary> Window that owns this viewmodel. </summary>
+        public Window Owner { get; set; }
+
         #endregion
 
         public SimpleCommand Export { get; private set; }
+
+        public SimpleCommand GenerateReport { get; private set; }
 
         /// <summary> Export the currently-displayed table data to a CSV file. </summary>
         private void ExportTable()
@@ -70,6 +79,14 @@ namespace goh_ui.Viewmodels
             {
                 MessageBox.Show($"Error saving file:\n{e.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        /// <summary> Open the 'Roster Report' dialog. </summary>
+        private void DoReport(Window owner)
+        {
+            var vm = new RosterReportViewmodel(Members, units);
+            var win = new RosterReportView(vm) { Owner = owner };
+            win.ShowDialog();
         }
 
 

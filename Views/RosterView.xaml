@@ -42,15 +42,23 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             
             <Label Grid.Column="0" Content="Guild Roster for "/>
             <Label Grid.Column="1" Content="{Binding Path=GuildName}" FontWeight="Bold"/>
-            <Button Grid.Column="3"
+            <Button Grid.Column="3" 
+                    Height="22"
+                    Margin="5,0"
+                    Padding="5,0"
+                    Command="{Binding Path=GenerateReport}"
+                    ToolTip="Search all players' rosters for key squads"
+                    Content="Roster Report"/>
+            <Button Grid.Column="4"
                     Height="22"
                     Width="22"
                     Command="{Binding Path=Export}"
-                    ToolTip="Export table data">
+                    ToolTip="Export roster table data">
                 <Label Content="⍖"
                        FontSize="16"
                        Margin="-1,-2,0,0"

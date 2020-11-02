@@ -494,7 +494,7 @@ namespace goh_ui
                 return;
             }
 
-            var vm = new RosterViewmodel(guild, Members);
+            var vm = new RosterViewmodel(guild, Members, gameData.Units);
             var view = new RosterView(vm) { Owner = parent };
             view.ShowDialog();
         }

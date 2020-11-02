@@ -1,9 +1,8 @@
-﻿using System;
+﻿using goh_ui.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
 
@@ -55,7 +54,8 @@ namespace goh_ui.Viewmodels
             BuildFilterList();
             SelectedFilter = Filters.FirstOrDefault();
 
-            TryLoadPresets();
+            PresetsList = SquadPreset.LoadPresets();
+            ShowPresets = PresetsList.Any();
         }
 
         // Filtered lists of units
@@ -289,47 +289,6 @@ namespace goh_ui.Viewmodels
         /// <summary> Whether the UI should show the presets menu. </summary>
         public bool ShowPresets { get; private set; } = false;
 
-        /// <summary> Load presets from a CSV file on disk. </summary>
-        private void TryLoadPresets()
-        {
-            PresetsList.Clear();
-
-            // Look for CSV file in directory with the program
-            string preset_filename = "presets.csv";
-            string fn = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, preset_filename);
-            if (!File.Exists(fn))
-                return;
-
-            foreach (string line in File.ReadLines(preset_filename))
-            {
-                // Remove comments
-                string thisline = Regex.Replace(line, @"#.*^", "");
-
-                if (string.IsNullOrWhiteSpace(thisline))
-                    continue;
-
-                // Extract fields
-                var fields = thisline.Split(',').Select(f => f.Trim()).ToArray();
-                if (fields.Length < 6)
-                    continue;
-                if (fields.Any(f => string.IsNullOrWhiteSpace(f)))
-                    continue;
-
-                // Add to preset list
-                PresetsList.Add(new SquadPreset()
-                {
-                    Name = fields[0],
-                    Character1 = fields[1],
-                    Character2 = fields[2],
-                    Character3 = fields[3],
-                    Character4 = fields[4],
-                    Character5 = fields[5]
-                });
-            }
-
-            ShowPresets = PresetsList.Any();
-        }
-
         /// <summary> Populate the UI with the preset with the specified name. </summary>
         public void LoadPreset(string name)
         {
@@ -343,24 +302,25 @@ namespace goh_ui.Viewmodels
                 SelectedFilter = Filters.First();
 
             // Override dropdowns with preset
-            SelectedUnit1 = FindUnit(pr.Character1);
-            SelectedUnit2 = FindUnit(pr.Character2);
-            SelectedUnit3 = FindUnit(pr.Character3);
-            SelectedUnit4 = FindUnit(pr.Character4);
-            SelectedUnit5 = FindUnit(pr.Character5);
+            SelectedUnit1 = FindUnit(pr.Character1, Units);
+            SelectedUnit2 = FindUnit(pr.Character2, Units);
+            SelectedUnit3 = FindUnit(pr.Character3, Units);
+            SelectedUnit4 = FindUnit(pr.Character4, Units);
+            SelectedUnit5 = FindUnit(pr.Character5, Units);
         }
 
         /// <summary> Finds a unit with a name similar to the provided name. </summary>
         /// <remarks>Does case-insensitive matching and works around non-ASCII characters.</remarks>
         /// <param name="name">Character name, or something pretty close.</param>
+        /// <param name="units">List of unit names to select from.</param>
         /// <returns>Actual character name, or null if no match found.</returns>
-        private string FindUnit(string name)
+        internal static string FindUnit(string name, IEnumerable<string> units)
         {
             if (name == null || string.IsNullOrWhiteSpace(name))
                 return null;
 
             // Look for a match, ignoring case
-            foreach (var unit in Units)
+            foreach (var unit in units)
             {
                 if (unit.Equals(name, StringComparison.OrdinalIgnoreCase))
                     return unit;
@@ -368,9 +328,9 @@ namespace goh_ui.Viewmodels
 
             // Manually handle cases with weird characters
             if (name.StartsWith("Padm"))
-                return Units.FirstOrDefault(u => u.StartsWith("Padm"));
+                return units.FirstOrDefault(u => u.StartsWith("Padm"));
             if (name.StartsWith("Chirrut"))
-                return Units.FirstOrDefault(u => u.StartsWith("Chirrut"));
+                return units.FirstOrDefault(u => u.StartsWith("Chirrut"));
 
             return null;
         }
@@ -403,29 +363,6 @@ namespace goh_ui.Viewmodels
             Unit5 = c5;
 
             TotalPower = Unit1.TruePower + Unit2.TruePower + Unit3.TruePower + Unit4.TruePower + Unit5.TruePower;
-        }
-    }
-
-    /// <summary>
-    /// Pre-defined squad setup.
-    /// </summary>
-    public class SquadPreset
-    {
-        public string Name { get; set; }
-        public string Character1 { get; set; }
-        public string Character2 { get; set; }
-        public string Character3 { get; set; }
-        public string Character4 { get; set; }
-        public string Character5 { get; set; }
-        public SquadPreset() { }
-        public SquadPreset(string name, string c1, string c2, string c3, string c4, string c5)
-        {
-            Name = name;
-            Character1 = c1;
-            Character2 = c2;
-            Character3 = c3;
-            Character4 = c4;
-            Character5 = c5;
         }
     }
 }
