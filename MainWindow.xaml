@@ -59,6 +59,10 @@
                           ToolTip="Find all guild members who have a particular squad"
                           Command="{Binding Path=SquadCheckerCommand}"
                           IsEnabled="{Binding Path=UnlockTools}"/>
+                <MenuItem Header="_Pit Challenge Report"
+                          ToolTip="See players and units eligible for Challenge-mode Pit raid."
+                          Command="{Binding Path=PitReportCommand}"
+                          IsEnabled="{Binding Path=UnlockTools}"/>
                 <Separator/>
                 <MenuItem Header="Guild _Alliance Report"
                           ToolTip="Generate a summary for the guilds in an alliance."

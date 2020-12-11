@@ -172,6 +172,7 @@ namespace goh_ui
         public SimpleCommand RosterCommand { get; private set; }
         public SimpleCommand WhoHasCommand { get; private set; }
         public SimpleCommand SquadCheckerCommand { get; private set; }
+        public SimpleCommand PitReportCommand { get; private set; }
         public SimpleCommand AllianceCommand { get; private set; }
         public SimpleCommand ZetasCommand { get; private set; }
         public SimpleCommand ShowAbout { get; private set; }
@@ -228,6 +229,7 @@ namespace goh_ui
             RosterCommand = new SimpleCommand(DoRoster);
             WhoHasCommand = new SimpleCommand(DoWhoHas);
             SquadCheckerCommand = new SimpleCommand(DoSquadChecker);
+            PitReportCommand = new SimpleCommand(DoPitReport);
             AllianceCommand = new SimpleCommand(DoAllianceReport);
             ZetasCommand = new SimpleCommand(DoZetas);
             ShowAbout = new SimpleCommand(() => AboutWindow.Display(this.parent));
@@ -526,6 +528,21 @@ namespace goh_ui
 
             var vm = new SquadFinderViewmodel(Members, gameData.Units);
             var view = new SquadFinderView(vm) { Owner = parent };
+            view.ShowDialog();
+        }
+
+        /// <summary> Display challenge-mode Pit raid report. </summary>
+        private void DoPitReport()
+        {
+            // Ensure we have all the data we need
+            if (!IsAllDataAvailable())
+            {
+                ShowError("Guild data has not yet been successfully retrieved.");
+                return;
+            }
+
+            var vm = new PitReportViewmodel(guild, Members);
+            var view = new PitReportView(vm) { Owner = parent };
             view.ShowDialog();
         }
 

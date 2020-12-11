@@ -79,6 +79,12 @@ followed by the full names (as they appear in-game) of the characters in the
 squad.  Squads listed in this file will appear in the "Presets" menu of the
 Squad Checker tool and will be used when generating a Roster Report.
 
+### Pit Challenge Report
+
+This tool filters the guild's roster to show only those units eligible to be
+used in the Challenge mode of the Pit raid. Use this view to help decide whether
+your guild is ready for Challenge mode and to help plan strategy.
+
 ### Alliance Overview
 
 This tool provides an automated way to fetch basic summary data about the
