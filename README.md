@@ -128,6 +128,13 @@ your defense.  Currently, there's no way to pull data on a guild without
 knowing the ally code of a member.
 
 
+## Building
+
+This program was created with Visual Studio 2019.  To build it, you will
+need to have installed the VS components for "desktop development" and
+for the .NET framework 4.7.
+
+
 ## License
 
 This program is made freely available under the following license:
