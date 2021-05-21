@@ -29,7 +29,9 @@ namespace goh_ui
             buttonTest = test;
         }
 
+#pragma warning disable 0067
         public event EventHandler CanExecuteChanged;
+#pragma warning restore 0067
         public bool CanExecute(object parameter) => buttonTest != null ? buttonTest.Invoke() : true;
         public void Execute(object parameter) => action?.Invoke();
     }
@@ -48,7 +50,9 @@ namespace goh_ui
             buttonTest = test;
         }
 
+#pragma warning disable 0067
         public event EventHandler CanExecuteChanged;
+#pragma warning restore 0067
         public bool CanExecute(object parameter) => buttonTest != null ? buttonTest.Invoke() : true;
         public void Execute(object parameter) => action?.Invoke(parameter);
     }
