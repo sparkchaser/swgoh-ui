@@ -202,12 +202,12 @@ namespace goh_ui.Viewmodels
                 crew = new Crew[] { },
                 mods = new Mod[]
                 {
-                    new Mod() { level = 15, pips = 5, slot = "1", set = "1" },
-                    new Mod() { level = 15, pips = 5, slot = "2", set = "1" },
-                    new Mod() { level = 15, pips = 5, slot = "3", set = "1" },
-                    new Mod() { level = 15, pips = 5, slot = "4", set = "1" },
-                    new Mod() { level = 15, pips = 5, slot = "5", set = "1" },
-                    new Mod() { level = 15, pips = 5, slot = "6", set = "1" }
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_SQUARE },
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_ARROW },
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_DIAMOND },
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_TRIANGLE },
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_CIRCLE },
+                    new Mod() { level = 15, pips = 5, set = Mod.SET_HEALTH, slot = Mod.SLOT_CROSS }
                 }
             };
             PopulateFields();

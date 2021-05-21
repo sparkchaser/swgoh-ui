@@ -296,9 +296,9 @@ namespace goh_ui
 
         #region Slot constants
 
-        public static readonly string SLOT_TOP_LEFT    = "1";
-        public static readonly string SLOT_BOTTOM_LEFT = "2";
-        public static readonly string SLOT_TOP_RIGHT   = "3";
+        public static readonly int SLOT_TOP_LEFT    = 1;
+        public static readonly int SLOT_BOTTOM_LEFT = 2;
+        public static readonly int SLOT_TOP_RIGHT   = 3;
 
         #endregion
     }
@@ -324,52 +324,37 @@ namespace goh_ui
         /// <summary> Game's internal ID for this mod. </summary>
         public string id { get; set; }
         /// <summary> Which slot this mod goes in. </summary>
-        public string slot { get; set; }
-        // Currently unused
-        public int setId { get; set; }
+        public int slot { get; set; }
+        /// <summary> Mod tier (the "MK" value, 1-6). </summary>
+        public int tier { get; set; }
         /// <summary> Which set this mod belongs to. </summary>
-        public string set { get; set; }
+        public int set { get; set; }
         /// <summary> Mod level. </summary>
         public int level { get; set; }
         /// <summary> Number of 'dots' on the mod. </summary>
         public int pips { get; set; }
-        
-        #region These fields don't currently get set
-        
-        public string primaryBonusType { get; set; }
-        public string primaryBonusValue { get; set; }
-        public string secondaryType_1 { get; set; }
-        public string secondaryValue_1 { get; set; }
-        public string secondaryType_2 { get; set; }
-        public string secondaryValue_2 { get; set; }
-        public string secondaryType_3 { get; set; }
-        public string secondaryValue_3 { get; set; }
-        public string secondaryType_4 { get; set; }
-        public string secondaryValue_4 { get; set; }
-
-        #endregion
 
         #region Slot ID constants
 
-        public static readonly string SLOT_SQUARE   = "1";
-        public static readonly string SLOT_ARROW    = "2";
-        public static readonly string SLOT_DIAMOND  = "3";
-        public static readonly string SLOT_TRIANGLE = "4";
-        public static readonly string SLOT_CIRCLE   = "5";
-        public static readonly string SLOT_CROSS    = "6";
+        public static readonly int SLOT_SQUARE   = 1;
+        public static readonly int SLOT_ARROW    = 2;
+        public static readonly int SLOT_DIAMOND  = 3;
+        public static readonly int SLOT_TRIANGLE = 4;
+        public static readonly int SLOT_CIRCLE   = 5;
+        public static readonly int SLOT_CROSS    = 6;
 
         #endregion
 
         #region Set constants
 
-        public static readonly string SET_HEALTH      = "1";
-        public static readonly string SET_OFFENSE     = "2";
-        public static readonly string SET_DEFENSE     = "3";
-        public static readonly string SET_SPEED       = "4";
-        public static readonly string SET_CRIT_CHANCE = "5";
-        public static readonly string SET_CRIT_DAMAGE = "6";
-        public static readonly string SET_POTENCY     = "7";
-        public static readonly string SET_TENACITY    = "8";
+        public static readonly int SET_HEALTH      = 1;
+        public static readonly int SET_OFFENSE     = 2;
+        public static readonly int SET_DEFENSE     = 3;
+        public static readonly int SET_SPEED       = 4;
+        public static readonly int SET_CRIT_CHANCE = 5;
+        public static readonly int SET_CRIT_DAMAGE = 6;
+        public static readonly int SET_POTENCY     = 7;
+        public static readonly int SET_TENACITY    = 8;
 
         #endregion
     }

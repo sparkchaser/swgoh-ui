@@ -945,7 +945,7 @@ namespace goh_ui
         /// <param name="relic_bonuses">Data from the "galactic power per tier" game data table.</param>
         private static void ComputeTruePower(List<PlayerInfo> guild_roster, int[] relic_bonuses)
         {
-            if (guild_roster == null || relic_bonuses == null || relic_bonuses.Length != 7)
+            if (guild_roster == null || relic_bonuses == null || relic_bonuses.Length < 7)
                 return;
 
             // Compute what the game would show for each unit's power
@@ -956,7 +956,8 @@ namespace goh_ui
                     character.TruePower = character.gp;
                     if (character.combatType == Character.COMBATTYPE_CHARACTER && character.gear >= 13 && character.relic.currentTier > 2)
                     {
-                        character.TruePower += (long)Math.Round(relic_bonuses[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
+                        if ((character.relic.currentTier - 3) < relic_bonuses.Length)
+                            character.TruePower += (long)Math.Round(relic_bonuses[character.relic.currentTier - 3] * GP_PER_RELIC_SCALE_FACTOR);
                     }
                 }
             }

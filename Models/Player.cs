@@ -141,11 +141,11 @@ namespace goh_ui.Models
                        c.level >= 85 &&
                        c.rarity >= 7 &&
                        c.gear >= 10 &&
-                       c.gp >= 13_000 &&
+                       c.TruePower >= 13_000 &&
                        UselessCharacters.Contains(c.defId) == false;
             });
 
-            MeaningfulPower = relevant.Select(c => c.gp).Sum();
+            MeaningfulPower = relevant.Select(c => c.TruePower).Sum();
 
             TwEfficiency = Math.Round(((double)MeaningfulPower / Power) * 100.0, 2);
         }
