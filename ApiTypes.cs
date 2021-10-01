@@ -223,6 +223,33 @@ namespace goh_ui
         public static readonly string COMBATTYPE_SHIP      = "SHIP";
 
         #endregion
+
+        #region Build dummy objects
+
+        /// <summary> Build a dummy character object for a unit that doesn't exist. </summary>
+        public static Character DummyCharacter()
+        {
+            return new Character()
+            {
+                id = "-1",
+                defId = "DUMMY_UNIT",
+                name = "Not Available",
+                rarity = 0,
+                level = 0,
+                gp = 0,
+                xp = 0,
+                combatType = Character.COMBATTYPE_CHARACTER,
+                gear = 1,
+                equipped = new Equipped[] { },
+                skills = new Skill[] { },
+                crew = new Crew[] { },
+                mods = new Mod[] { },
+                relic = new RelicInfo() { currentTier = 1 },
+                TruePower = 0
+            };
+        }
+
+        #endregion
     }
 
     /// <summary>

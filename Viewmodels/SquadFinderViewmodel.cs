@@ -174,6 +174,14 @@ namespace goh_ui.Viewmodels
             DependencyProperty.Register("SelectedFilter", typeof(string), typeof(SquadFinderViewmodel),
                                         new PropertyMetadata(null, SelectedFilterChanged));
 
+        /// <summary> Whether to list all guild members  (true), or just those with matching squads (false). </summary>
+        public bool ListAll
+        {
+            get { return (bool)GetValue(ListAllProperty); }
+            set { SetValue(ListAllProperty, value); }
+        }
+        public static readonly DependencyProperty ListAllProperty = _dp<bool>("ListAll", false);
+
         #endregion
 
         #region Unit list filtering
@@ -253,23 +261,35 @@ namespace goh_ui.Viewmodels
                 return;
             }
 
-            // Figure out who else has all of these toons
+            // Pull unit details from each member's roster
             var list = new List<SquadLookupResult>();
             foreach (var m in Members)
             {
-                var names = m.Roster.Select(c => c.name).ToList();
-                if (names.Contains(SelectedUnit1) && names.Contains(SelectedUnit2) &&
-                    names.Contains(SelectedUnit3) && names.Contains(SelectedUnit4) &&
-                    names.Contains(SelectedUnit5))
+                Character[] chars = new Character[5];
+                bool skip = false;
+                for (var i = 0; i < 5; ++i)
                 {
-                    var c1 = m.Roster.Where(c => c.name == SelectedUnit1).First();
-                    var c2 = m.Roster.Where(c => c.name == SelectedUnit2).First();
-                    var c3 = m.Roster.Where(c => c.name == SelectedUnit3).First();
-                    var c4 = m.Roster.Where(c => c.name == SelectedUnit4).First();
-                    var c5 = m.Roster.Where(c => c.name == SelectedUnit5).First();
-
-                    list.Add(new SquadLookupResult(c1, c2, c3, c4, c5){ Player = m.Name });
+                    chars[i] = m.Roster.Where(c => c.name == selected[i]).FirstOrDefault();
+                    if (chars[i] == null)
+                    {
+                        if (ListAll)
+                        {
+                            // Insert dummy for missing characters
+                            chars[i] = Character.DummyCharacter();
+                            chars[i].name = selected[i];
+                        }
+                        else
+                        {
+                            // Bail out if missing a character
+                            skip = true;
+                            break;
+                        }
+                    }
                 }
+                if (skip)
+                    continue;
+
+                list.Add(new SquadLookupResult(chars[0], chars[1], chars[2], chars[3], chars[4]) { Player = m.Name });
             }
 
             SearchResults = list.OrderBy(x => x.TotalPower).Reverse().ToList();

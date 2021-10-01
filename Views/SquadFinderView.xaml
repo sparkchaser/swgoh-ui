@@ -4,7 +4,7 @@
                   xmlns:local="clr-namespace:goh_ui"
                   xmlns:views="clr-namespace:goh_ui.Views"
                   Title="Squad Lookup"
-                  Height="400"
+                  Height="450"
                   MinWidth="600"
                   SizeToContent="Width">
     <Window.Resources>
@@ -15,6 +15,7 @@
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -107,8 +108,15 @@
             </Grid>
         </StackPanel>
 
+        <!-- Options -->
+        <GroupBox Grid.Row="2" Grid.Column="0" Header="Options" Margin="5,3">
+            <StackPanel Orientation="Vertical" Margin="2">
+                <CheckBox Content="List all players" IsChecked="{Binding Path=ListAll}" ToolTip="Include guild members that don't have the selected units."/>
+            </StackPanel>
+        </GroupBox>
+
         <!-- Results view -->
-        <DataGrid Grid.Row="2"
+        <DataGrid Grid.Row="3"
                   Grid.Column="0"
                   x:Name="ResultsGrid"
                   Margin="5"
@@ -143,7 +151,7 @@
         </DataGrid>
 
         <!-- Result count display -->
-        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
+        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal">
             <StackPanel.Style>
                 <Style TargetType="{x:Type StackPanel}">
                     <Style.Triggers>
