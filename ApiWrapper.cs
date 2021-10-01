@@ -142,8 +142,11 @@ namespace goh_ui
             var result = await client.PostAsync(URL_SIGNIN, content);
             if (!result.IsSuccessStatusCode)
             {
+                string errmsg = result.ReasonPhrase;
+                if (result.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+                    errmsg += " or invalid password";
                 // TODO: handle errors
-                System.Windows.MessageBox.Show(result.ReasonPhrase, "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show(errmsg, "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return false;
             }
 
