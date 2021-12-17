@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -361,7 +362,7 @@ namespace goh_ui
             SaveFileDialog dlg = new SaveFileDialog()
             {
                 Title = "Export to",
-                Filter = "JSON File (*.json)|*.json|All Files (*.*)|*.*",
+                Filter = "JSON File (*.json)|*.json|ZIP File (*.zip)|*.zip|All Files (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (dlg.ShowDialog() != true)
@@ -374,13 +375,58 @@ namespace goh_ui
                 players = rawPlayerInfo.ToArray()
             };
             string data = Newtonsoft.Json.JsonConvert.SerializeObject(c, Newtonsoft.Json.Formatting.Indented);
-            try
+            if (dlg.FileName.ToLower().EndsWith(".zip"))
             {
-                File.WriteAllText(dlg.FileName, data);
+                // Create temporary working directory
+                string tempdir = Path.Combine(Path.GetTempPath(), "goh_ui_temp");
+                try
+                {
+                    Directory.CreateDirectory(tempdir);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error creating temp dir:\n{e.Message}");
+                    return;
+                }
+
+                // Write output to file
+                string filename = Path.Combine(tempdir, Path.GetFileNameWithoutExtension(dlg.FileName) + ".json");
+                try
+                {
+                    File.WriteAllText(filename, data);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error writing file:\n{e.Message}");
+                    Directory.Delete(tempdir, true);
+                    return;
+                }
+
+                // Create zip file
+                try
+                {
+                    ZipFile.CreateFromDirectory(tempdir, dlg.FileName);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error creating zipfile:\n{e.Message}");
+                    Directory.Delete(tempdir, true);
+                    return;
+                }
+
+                // Clean up
+                Directory.Delete(tempdir, true);
             }
-            catch (Exception e)
+            else
             {
-                ShowError($"Error writing file:\n{e.Message}");
+                try
+                {
+                    File.WriteAllText(dlg.FileName, data);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error writing file:\n{e.Message}");
+                }
             }
         }
 
@@ -391,22 +437,74 @@ namespace goh_ui
             OpenFileDialog dlg = new OpenFileDialog()
             {
                 Title = "Import from",
-                Filter = "JSON File (*.json)|*.json|All Files (*.*)|*.*",
+                Filter = "JSON File (*.json)|*.json|ZIP File (*.zip)|*.zip|All Files (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
             };
             if (dlg.ShowDialog() != true)
                 return;
 
-            // Read file
             string data;
-            try
+
+            if (dlg.FileName.ToLower().EndsWith(".zip"))
             {
-                data = File.ReadAllText(dlg.FileName);
+                // Create temporary working directory
+                string tempdir = Path.Combine(Path.GetTempPath(), "goh_ui_temp");
+                try
+                {
+                    Directory.CreateDirectory(tempdir);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error creating temp dir:\n{e.Message}");
+                    return;
+                }
+
+                // Extract contents to temporary directory
+                try
+                {
+                    ZipFile.ExtractToDirectory(dlg.FileName, tempdir);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error extracting zipfile:\n{e.Message}");
+                    Directory.Delete(tempdir, true);
+                    return;
+                }
+
+                // Locate JSON file and read contents
+                var matches = Directory.GetFiles(tempdir, "*.json");
+                if (matches == null || matches.Length == 0)
+                {
+                    ShowError($"No data file found in archive.");
+                    Directory.Delete(tempdir, true);
+                    return;
+                }
+                try
+                {
+                    data = File.ReadAllText(matches.First());
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error opening file:\n{e.Message}");
+                    Directory.Delete(tempdir, true);
+                    return;
+                }
+
+                // Clean up
+                Directory.Delete(tempdir, true);
             }
-            catch (Exception e)
+            else
             {
-                ShowError($"Error opening file:\n{e.Message}");
-                return;
+                // Read file
+                try
+                {
+                    data = File.ReadAllText(dlg.FileName);
+                }
+                catch (Exception e)
+                {
+                    ShowError($"Error opening file:\n{e.Message}");
+                    return;
+                }
             }
 
             // Parse data
