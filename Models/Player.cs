@@ -141,32 +141,12 @@ namespace goh_ui.Models
                        c.level >= 85 &&
                        c.rarity >= 7 &&
                        c.gear >= 10 &&
-                       c.TruePower >= 13_000 &&
-                       UselessCharacters.Contains(c.defId) == false;
+                       c.TruePower >= 13_000;
             });
 
             MeaningfulPower = relevant.Select(c => c.TruePower).Sum();
 
             TwEfficiency = Math.Round(((double)MeaningfulPower / Power) * 100.0, 2);
         }
-
-        /// <summary> List of characters that serve no point whatsoever. </summary>
-        private readonly List<string> UselessCharacters = new List<string>()
-        {
-            "CORUSCANTUNDERWORLDPOLICE",
-            "JEDIKNIGHTGUARDIAN",
-            "TUSKENRAIDER",
-            "TUSKENSHAMAN",
-            "URORRURRR",
-            "UGNAUGHT",
-            "GARSAXON",
-            "IMPERIALSUPERCOMMANDO",
-            "LOBOT",
-            "BODHIROOK",
-            "HUMANTHUG",
-            "ROSETICO",
-            "EETHKOTH",
-            "KITFISTO"
-        };
     }
 }
